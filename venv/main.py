@@ -1,0 +1,227 @@
+from dataModel import *
+from LayoutFinder import *
+from Utility import *
+import glob
+# x = Canvas()
+
+# x.drawBus(0,0,800,[["Disconnector", "Breaker", "Disconnector","singlearrow"]]*1, "down")
+# x.printToFile(None)
+
+
+
+
+import urllib, json
+import collections
+
+class drawer():
+
+
+
+
+
+    def __init__(self, stationID):
+        glob.reset()
+        self.ID = stationID
+        url = "http://192.168.2.26:9000/query/TwoOptionsID?TopoID="+str(stationID)
+        response = urllib.urlopen(url)
+        data = json.loads(response.read())
+        self.subID = data["results"][0]["topo_equal"][0]["attributes"]["subid"]
+
+
+        datasets = data["results"][1]["@@setedge"]
+
+        self.adjDict = collections.defaultdict(set)
+        for points in datasets:
+            fromNode = points["from_type"] + "#" + points["from_id"]
+            toNode = points["to_type"] + "#" + points["to_id"]
+            # print points["from_type"]
+            self.adjDict[fromNode].add(toNode)
+            self.adjDict[toNode].add(fromNode)
+
+        for k in self.adjDict:
+            self.adjDict[k] = list(self.adjDict[k])
+
+        self.busCN = set()
+        self.VoltBUSDict = collections.defaultdict(set)
+        for each in data["results"][2]["vertexSet"]:
+            if each["v_type"] == "BUS":
+                busID = "BUS#" + each["v_id"]
+                bCN = self.adjDict[busID][0]
+                if len(self.adjDict[bCN]) > 1:
+                    self.VoltBUSDict[int(each["attributes"]["volt"])].add(self.adjDict[busID][0])
+                    self.busCN.add(bCN)
+            if each["v_type"] == "Disconnector":
+                glob.daozhastat[each["attributes"]["id"]] = each["attributes"]["point"]
+        glob.fillRelation(self.adjDict, self.busCN)
+
+
+    def drawBuses(self, buses, x, y, dir, canv):
+        buses = list(buses)
+        # LayoutFinder(self.adjDict, buses, self.busCN, x, y).findConnectedBranch()
+        # # Layout = LayoutFinder(self.adjDict, buses, self.busCN, x, y).determineLayout()
+        # # print Layout
+        # return
+        #print LayoutFinder(self.adjDict, buses, self.busCN, x, y).findConnectedBranch()
+
+        layout = LayoutFinder(self.adjDict, buses, self.busCN, x, y, dir)
+        Bs = layout.findLayout()
+        for b in Bs:
+            bs = glob.BusDict[b]
+            self.drawSingleBus(bs.id, bs.x, bs.y, layout.dir, bs.w, canv)
+
+    def drawSingleBus(self, bus, x, y, dir, busLen, canv):
+        b = Bus(x, y, busLen, bus, dir, canv)
+        b.draw()
+
+    def drawBusPair(self, buses, x, y, dir, busL, canv):
+        b1,b2 = buses
+        glob.AddBusPair(b1, b2)
+        bus1 = Bus(x, y - 25, busL, b1, dir, canv)
+        bus2 = Bus(x, y + 25, busL, b2, dir, canv)
+        bus1.draw()
+
+        bus2.draw()
+
+
+    def drawHorizontalBusPair(self, buses, x, y, dir, len, canv):
+        bus1, bus2 = buses
+        b1 = Bus(x - 50 - len/2, y, len, bus1, dir, canv)
+        b2 = Bus(x + 50 + len/2, y, len, bus2, dir, canv)
+        b1.draw()
+        b2.draw()
+
+
+    def draw2Section(self, canv):
+        kset = list(self.VoltBUSDict.keys())
+        kset.sort()
+        lowVolt, highVolt = kset
+        self.drawBuses(self.VoltBUSDict[lowVolt], 0, 0, "down", canv)
+        self.drawBuses(self.VoltBUSDict[highVolt], 0, -800, "up", canv)
+
+    def draw3Section(self, canv):
+        kset = list(self.VoltBUSDict.keys())
+        kset.sort()
+        lowVolt, midVolt, highVolt = kset
+        self.drawBuses(self.VoltBUSDict[highVolt], -600, -800, "up", canv)
+        self.drawBuses(self.VoltBUSDict[midVolt], 600, -800, "up", canv)
+        self.drawBuses(self.VoltBUSDict[lowVolt], -600, 0, "down", canv)
+
+    def draw4Section(self, canv):
+        kset = list(self.VoltBUSDict.keys())
+        kset.sort()
+        lowVolt, midlowVolt, midhighVolt, highVolt = kset
+        self.drawBuses(self.VoltBUSDict[highVolt], -600, -800, "up", canv)
+        self.drawBuses(self.VoltBUSDict[midhighVolt], 600, -800, "up", canv)
+        self.drawBuses(self.VoltBUSDict[midlowVolt], -600, 0, "down", canv)
+        self.drawBuses(self.VoltBUSDict[lowVolt], 600, 0, "down", canv)
+
+    def newdraw(self, isTest):
+        x = Canvas()
+        if len (self.VoltBUSDict) == 1:
+            vt = list(self.VoltBUSDict.keys())[0]
+            self.drawBuses(self.VoltBUSDict[vt], 0, 0, "up", x)
+        elif len(self.VoltBUSDict) == 2:
+            self.draw2Section(x)
+        elif len(self.VoltBUSDict) == 3:
+            self.draw3Section(x)
+        elif len(self.VoltBUSDict) == 4:
+            self.draw4Section(x)
+        else:
+            raise ValueError("unknown type")
+        for t in glob.AllTrans:
+            glob.AllTrans[t].drawTails()
+
+
+        #self.drawHorizontalBusPair(x)
+        #self.drawVerticalBusPair(x)
+        if isTest:
+            x.printToFile("/tmp/stationDraw/"+str(self.subID)+".json")
+        else:
+            x.printToFile()
+
+    def findBusConnector(self):
+        reversedConjunctions = [x[::-1] for x in self.conjunctions]
+        for i in range(len(self.conjunctions)):
+            for j in range(i + 1, len(reversedConjunctions)):
+                if self.conjunctions[i] == reversedConjunctions[j]:
+                    res = self.conjunctions[i]
+                    self.conjunctions.remove(res)
+                    self.conjunctions.remove(res[::-1])
+                    return res
+
+    def findConjunctions(self):
+        raw = collections.defaultdict(list)
+        pairs = {}
+        transformers = {}
+        for each in self.conjunctions:
+            raw[each[-1]].append(each)
+        for each in raw:
+            if self.IsTransformerBranch(raw[each]):
+                transformers[each] = raw[each]
+            else:
+                pairs[each] = raw[each]
+        return [pairs, transformers]
+
+    def IsTransformerBranch(self, conj):
+        visited = set()
+        for each in conj:
+            start = each[-1]
+            visited.add(each[-2])
+        future = [start]
+        while future:
+            tmp = future.pop()
+            if tmp in visited:
+                continue
+            if "transformer" in tmp:
+                return True
+            visited.add(tmp)
+            for each in self.adjDict[tmp]:
+                future.append(each)
+        return False
+
+
+class tester:
+    def __init__(self):
+        ct = collections.Counter()
+        count = 0
+        with open("/tmp/test3.csv","r") as f:
+            ids = [x.strip() for x in f.readlines() if int(x)>0]
+            for id in ids:
+                #if id ==
+                x = drawer(id)
+                if len(x.VoltBUSDict) == 4:
+                    print id
+                    count+=1
+                    try:
+                        print "TRYING...", id
+                        print x.VoltBUSDict
+                        x.newdraw(True)
+                    except Exception, err:
+                        print "CANNOT DRAW: ", id
+
+import operator
+
+isTest = False
+inp = 1038
+#k = tester()
+#25745: Vertical bus pair
+#25559: Single bus with segmentation and side bus
+#4909:  Vertical bus pair with side bus
+#25613: Vertical bus pair with side bus (with Transformer connected to the side bus
+#25920: Bus Pair with segmentation
+#25322: connected ACLine
+#5372: 10V and 220V
+if isTest:
+    testCases = [25745, 25559, 4909, 25613, 25920, 25322, 5372, 2578]
+    for i in testCases:
+        #print i
+        k = drawer(i)
+        k.newdraw(False)
+else:
+    k = drawer(inp)
+    k.newdraw(False)
+
+
+print "Done"
+
+
