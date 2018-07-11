@@ -11,9 +11,8 @@ nodeSize = {"daozha": (48, 58), "daozhakai": (48, 58), "kaiguan": (24, 64), "sin
 daozhastat = {}
 sideBusFP = ['Disconnector', 'Disconnector', 'Breaker', 'Disconnector']
 busPairFP = ['Disconnector', 'Disconnector']
-BusFlow = []
 transBus = collections.defaultdict(list)
-
+globOffset = 200
 
 class BusSkeleton:
     def __init__(self, cnID, x, y, w, dir):
@@ -42,10 +41,10 @@ def reset():
     global AllTrans
     global daozhastat
     global HorizontalBusPair
-    global BusFlow
     global transBus
+    global globOffset
 
-    BusFlow = []
+    globOffset = 400
     HorizontalBusPair = {}
     VerticalBusPair = {}
     AllTrans = {}
@@ -71,3 +70,6 @@ def fillRelation(adj, BusCNs):
     global BusCNID
     adjDict = adj
     BusCNID = BusCNs
+
+
+visitedBusCN = set()

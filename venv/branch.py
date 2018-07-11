@@ -37,10 +37,6 @@ class Branch:
                     self.isReversed = True
                     self.transName = k
 
-
-
-
-
     def SetLayout(self, x, y, direction):
         self.x = x
         self.y = y
@@ -91,9 +87,47 @@ class Branch:
                         else:
                             self.canvas.drawTail(newX, newY, bridge[len(bridge)/2], bridge, self.direction)
                     break
+                if (len(i) - 18)% 6==  0 :
+                    self.draw500Branch(self.x, self.y, i, "up")
+                    break
         else:
-            print tmp, len(tmp)
+            #print tmp, len(tmp)
             raise ValueError("ILLEGAL PAIR")
+
+    def find500BranchDirReversed(self, eles):
+        for line in eles:
+            for e in line:
+                if "transformer" in e:
+                    return True
+        return False
+
+    def draw500Branch(self, x, y, eles, dir):
+        newY = y
+        dirOffset = 60
+        reversedDirOffset = 40
+        otherBusY = glob.BusDict[eles[-1]].y
+        for i in range(0, len(eles)+1-6, 6):
+            seg = eles[i:i+6]
+            newY = self.canvas.drawBranch(x, newY, 40, seg, dir)
+            if i+6 != len(eles):
+                seghead = seg[-1]
+                tails = findTail(seghead, eles)
+                if len(tails) > 0:
+                    if self.find500BranchDirReversed(tails):
+                        tgtX, tgtY = self.x + reversedDirOffset, self.y + 50
+                        reversedDirOffset+=150
+                        newDir = self.direction
+                    else:
+                        tgtX, tgtY = self.x + dirOffset, otherBusY - 50
+                        newDir = reverseDirect(self.direction)
+                        dirOffset += 150
+                    self.canvas.drawLine(x, newY, tgtX, newY)
+                    self.canvas.drawLine(tgtX, newY, tgtX, tgtY)
+                    self.canvas.drawTail(tgtX, tgtY, seghead, eles, newDir)
+            else:
+                self.canvas.drawLine(x, newY, x, otherBusY)
+
+
 
     def drawHorizontalConnector(self, bus2):
         tmp = findTail(self.node, self.fromNode)

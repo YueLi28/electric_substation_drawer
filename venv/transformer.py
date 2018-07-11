@@ -13,12 +13,11 @@ class Transformer2port:
         else:
             self.y = y - 33
             self.other = [self.x, self.y+30]
-        self.busPosition()
+        self.arrangeBus()
 
     def getCorrectPort(self, x, y):
         return self.other
-    def getNextPort(self):
-        return self.other
+
 
 
     def findTailHead(self):
@@ -29,16 +28,20 @@ class Transformer2port:
             return
         return tailHs[0]
 
+
+    def arrangeBus(self):
+        t = self.findTailHead()
+        bus = self.BusConnected(t, self.name)
+        if  bus != None:
+            glob.transBus[bus].append(self)
+
     def drawTails(self):
         t = self.findTailHead()
         bus = self.BusConnected(t, self.name)
         if  bus== None:
             drawableHead = [x for x in self.adjDict[t] if x != self.name][0]
-            x,y = self.getNextPort()
+            x,y = self.getCorrectPort(0, 0)
             self.canv.drawTail(x, y, drawableHead, [t], self.direction)
-        else:
-            if bus not in glob.BusFlow:
-                glob.BusFlow.append(bus)
 
     def BusConnected(self, node, fromnode):
         future = [node]
@@ -52,11 +55,6 @@ class Transformer2port:
                 return tmp
             future.extend(self.adjDict[tmp])
         return None
-
-    def busPosition(self):
-        b = self.BusConnected(self.findTailHead(), self.name)
-        if b != None:
-            glob.transBus[b].append([self.x, self.y])
 
 
 
@@ -89,11 +87,13 @@ class Transformer3port:
             self.idx = 0
             return [self.x, self.y + 33]
 
+    def nextIsStrightPort(self):
+        if self.idx == 1:
+            return True
+        return False
 
     def getNextPort(self):
         res = self.ports[self.idx]
-        if self.idx >= 2:
-            print "ALERT: " + self.name
         self.idx += 1
         self.idx = self.idx % 2
         return res
@@ -102,8 +102,8 @@ class Transformer3port:
         tailHs = [x for x in self.adjDict[self.np] if x != self.name]
         for h in tailHs:
             bus = self.BusConnected(h, self.np)
-            if bus != None and bus not in glob.transBus:
-                glob.BusFlow.append(bus)
+            if bus != None:
+                glob.transBus[bus].append(self)
 
     def drawTails(self):
         tailHs = [x for x in self.adjDict[self.np] if x != self.name]

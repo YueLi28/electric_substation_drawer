@@ -25,9 +25,9 @@ class drawer():
         url = "http://192.168.2.26:9000/query/TwoOptionsID?TopoID="+str(stationID)
         response = urllib.urlopen(url)
         data = json.loads(response.read())
+        self.name =  data["results"][0]["topo_equal"][0]["attributes"]["Sub"]
+        print self.name
         self.subID = data["results"][0]["topo_equal"][0]["attributes"]["subid"]
-
-
         datasets = data["results"][1]["@@setedge"]
 
         self.adjDict = collections.defaultdict(set)
@@ -54,6 +54,13 @@ class drawer():
                 glob.daozhastat[each["attributes"]["id"]] = each["attributes"]["point"]
         glob.fillRelation(self.adjDict, self.busCN)
 
+    def isVisited(self):
+        if len(glob.visitedBusCN) == len(glob.visitedBusCN.union(self.busCN)):
+            print "visited"
+            return True
+        glob.visitedBusCN = glob.visitedBusCN.union(self.busCN)
+        #print len(glob.visitedBusCN)
+        return False
 
     def drawBuses(self, buses, x, y, dir, canv):
         buses = list(buses)
@@ -95,8 +102,8 @@ class drawer():
         kset = list(self.VoltBUSDict.keys())
         kset.sort()
         lowVolt, highVolt = kset
-        self.drawBuses(self.VoltBUSDict[lowVolt], 0, 0, "down", canv)
         self.drawBuses(self.VoltBUSDict[highVolt], 0, -800, "up", canv)
+        self.drawBuses(self.VoltBUSDict[lowVolt], 0, 0, "down", canv)
 
     def draw3Section(self, canv):
         kset = list(self.VoltBUSDict.keys())
@@ -116,7 +123,7 @@ class drawer():
         self.drawBuses(self.VoltBUSDict[lowVolt], 600, 0, "down", canv)
 
     def newdraw(self, isTest):
-        x = Canvas()
+        x = Canvas(self.name)
         if len (self.VoltBUSDict) == 1:
             vt = list(self.VoltBUSDict.keys())[0]
             self.drawBuses(self.VoltBUSDict[vt], 0, 0, "up", x)
@@ -189,20 +196,19 @@ class tester:
             for id in ids:
                 #if id ==
                 x = drawer(id)
-                if len(x.VoltBUSDict) == 4:
-                    print id
-                    count+=1
-                    try:
-                        print "TRYING...", id
-                        print x.VoltBUSDict
-                        x.newdraw(True)
-                    except Exception, err:
-                        print "CANNOT DRAW: ", id
+                count+=1
+                if x.isVisited():
+                    continue
+                try:
+                    print id, x.VoltBUSDict
+                    x.newdraw(True)
+                except Exception, err:
+                    print "\tCANNOT DRAW: ", id
 
 import operator
 
 isTest = False
-inp = 1038
+inp = 17183
 #k = tester()
 #25745: Vertical bus pair
 #25559: Single bus with segmentation and side bus

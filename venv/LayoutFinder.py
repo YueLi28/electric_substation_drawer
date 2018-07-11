@@ -13,58 +13,73 @@ class LayoutFinder:
         self.x = centerX
         self.y = centerY
         self.dir = dir
+        self.is32 = False
+        self.offset32 = 0
 
 
     def getEstimatedLength(self, cnID):
         return 100 * len(glob.adjDict[cnID])
 
 
+    def FixedTransformer(self, buses):
+        fixedT = []
+        for b in buses:
+            if b in glob.transBus:
+                for e in glob.transBus[b]:
+                    if "two" in e.name:
+                        fixedT.append([b, e])
+                    else:
+                        if e.y < self.y:
+                            fixedT.append([b, e])
+
+        return fixedT
+
+    def find1newX(self, buses):
+        fixedT = self.FixedTransformer(buses)
+        if fixedT:
+            t = fixedT[0][1]
+            if t.y > self.y:
+                self.dir = Utility.reverseDirect(self.dir)
+            self.y = t.y + glob.globOffset
+            glob.globOffset += 300
+            self.x = t.x
+
+    def find2newX(self, buses):
+        fixedT = self.FixedTransformer(buses)
+        if fixedT:
+            fixedT.sort(key = lambda x: x[1].x)
+            sortedBus = [x[0] for x in fixedT]
+            sortedPos = [x[1] for x in fixedT]
+            self.y = sortedPos[0].y + glob.globOffset
+            glob.globOffset += 200
+            tails = [x for x in buses if x not in sortedBus]
+            self.buses = sortedBus + tails
+            self.x = sum([e.x for e in sortedPos])/(len(sortedPos))
+
+
     def findLayout(self):
         if len(self.buses) == 1:
-            newX = self.findTransCorrespondingX(self.buses)
-            if -float('inf') < newX < float('inf'):
-                self.x = newX
+            self.find1newX(self.buses)
             glob.placeBus(self.buses[0], self.x, self.y, self.getEstimatedLength(self.buses[0]), self.dir)
             return self.buses
         elif len(self.buses) == 2:
+            self.find2newX(self.buses)
             return self.determineLayout2()
         elif len(self.buses) == 3:
             return self.determineLayout3()
         else:
             raise ValueError("NOT Handled Yet")
 
-    def findTransCorrespondingX(self, bs):
-        xmin = float('inf')
-        xmax = -float('inf')
-        y = None
-        for each in bs:
-            if each in glob.transBus:
-                tmp = glob.transBus[each]
-                for e in tmp:
-                    xmin = min(xmin, e[0])
-                    xmax = max(xmax, e[0])
-                    y = e[1]
-        if y != None and self.y < y:
-            self.y = 400
-            self.dir = Utility.reverseDirect(self.dir)
-            print self.dir
-        if xmin == xmax and len(bs) == 2:#only one but 2 buses
-            self.y = 400
-            if bs[0] in glob.transBus:
-                return xmin + 100
-            else:
-                return xmin - 100
-        return (xmin+xmax)/2
+
 
     def determineLayout2(self):
         b1, b2 = self.buses
-        if b1 in glob.BusFlow and b2 in glob.BusFlow:
-            if glob.BusFlow.index(b1) > glob.BusFlow.index(b2):
-                b1, b2 = b2, b1
         busD = self.checkStat(b1)[0]
-        newX = self.findTransCorrespondingX(self.buses)
-        if -float('inf') < newX < float('inf'):
-            self.x = newX
+        if self.is32:
+            glob.AddVerticalBusPair(b1, b2)
+            glob.placeBus(b1, self.x, self.y + 350 + 100*self.offset32, 1000, self.dir)
+            glob.placeBus(b2, self.x, self.y - 350 - 100*self.offset32, 1000, self.dir)
+            return [b1,b2]
         if busD[1] > busD[0]:#vertical pair
             glob.AddVerticalBusPair(b1, b2)
             w = self.getEstimatedLength(b1)
@@ -95,9 +110,6 @@ class LayoutFinder:
                     glob.placeBus(b2, self.x, self.y + 25, 1000, self.dir)
                     glob.placeBus(s, self.x, self.y + sY, 1000, self.dir)
                 else:
-                    if b1 in glob.BusFlow and b2 in glob.BusFlow:
-                        if glob.BusFlow.index(b1) > glob.BusFlow.index(b2):
-                            b1, b2 = b2, b1
                     glob.AddHorizontalBusPair(b1, b2)
                     glob.placeBus(b1, self.x - 500 - 50, self.y, 1000, self.dir)
                     glob.placeBus(b2, self.x + 500 + 50, self.y, 1000, self.dir)
@@ -118,9 +130,6 @@ class LayoutFinder:
                 return self.buses
             else: #maxCN is the long bus vertically aligned with the other 2
                 b1, b2 = [x for x in self.buses if x != maxCN]
-                if b1 in glob.BusFlow and b2 in glob.BusFlow:
-                    if glob.BusFlow.index(b1) > glob.BusFlow.index(b2):
-                        b1, b2 = b2, b1
                 glob.AddVerticalBusPair(b1, maxCN)
                 glob.AddVerticalBusPair(b2, maxCN)
                 glob.AddHorizontalBusPair(b1, b2)
@@ -151,6 +160,9 @@ class LayoutFinder:
                     checkSideBus[0] += 1
                 else:
                     checkSideBus[1] += 1
+            if len(tmpLines) == 1 and len(tmpLines[0]) >= 19 and (len(tmpLines[0]) - 19)%6==0: #500 volt station
+                self.offset32 = max(self.offset32, (len(tmpLines[0])-19)/6)
+                self.is32 = True
 
             busD[Otherbus] += 1
         return busD, checkSideBus

@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import json
 from transformer import *
 from TailDrawer import *
@@ -13,13 +15,17 @@ def branchCMP(b1, b2):
         return -1
     elif b2.isPaired and b2.isSingle:
         return 1
-
     if b1.isPaired:
         return -1
     elif b2.isPaired:
         return 1
-
     return 0
+
+def transformerBranchCMP(b1, b2):
+    if b1.isReversed and "three" in b1.transName:
+        return 1
+    return 0
+
 
 def No_Layout_Branch_CMP(b1, b2):
     if b1.isSingle:
@@ -52,6 +58,7 @@ class Bus:
                 else:
                     self.branches.append(b)
         self.branches.sort(cmp=branchCMP)
+        self.reversedBranches.sort(cmp=transformerBranchCMP)
 
 
 
@@ -125,9 +132,11 @@ def findTransformers(node, visitedNode):
 
 
 class Canvas:
-    def __init__(self):
+    def __init__(self, stationName):
         self.canvas = {"v": "6.2.2", "d":[],"p": {"background":"rgb(255,255,255)", "layers":["0",1], "autoAdjustIndex":True, "hierarchicalRendering":True}}
         self.allBus = {}
+        self.name = stationName
+        self.generateName()
 
     def drawFloat(self, x, y, eX, ele):
         if ele != "CN":
@@ -137,7 +146,12 @@ class Canvas:
         self.drawLine(x, y, x + complement, y)
         self.drawLine(eX, y, eX - complement, y)
 
+    def generateName(self):
+        namej = {"c":"ht.Text", "i":1, "p": {"name":"文字", "layer":1, "position":{"x":-800, "y":-800}},
+                 "s":{"label":"", "text.color":"rgb(255,0,0)", "text.font": "32px arial, sans-serif"}}
+        namej["s"]["text"] = self.name
 
+        self.canvas["d"].append(namej)
 
 
     def tmpFindNewTail(self, node, fromNodes):

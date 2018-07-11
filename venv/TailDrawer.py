@@ -59,14 +59,9 @@ class TailDrawer:
         else:
             paths = [self.findSinglePath(i, node) for i in neighbors]
             onlyPaths = [i[0] for i in paths]
-            left, direct,right = self.findDirectTail(onlyPaths)
+            direct,right = self.findDirectTail(onlyPaths)
             for p in direct:
                 self.newDraw(p[0], node, x, y, dir)
-            for p in left:
-                x-=40
-                self.drawLine(x+40, y, x, y)
-                self.newDraw(p[0], node, x, y, dir)
-            x+=len(left)*40
             for p in right:
                 x += 40
                 self.drawLine(x-40, y, x, y)
@@ -77,22 +72,22 @@ class TailDrawer:
 
     def findDirectTail(self, paths):
         direct = []
-        left = []
+        seconddirect = []
         right = []
         for path in paths:
             tmp = map(self.cleanElement, path)
             if "generator" in tmp or "transformer2" in tmp or "transformer3" in tmp:
                 direct.append(path)
             elif "singlearrow" in tmp:
-                left.append(path)
+                seconddirect.append(path)
             else:
                 right.append(path)
 
-        tmp = direct+left
+        tmp = direct+seconddirect + right
         if len(tmp) > 0:
             direct = tmp[:1]
-            left = tmp[1:]
-        return left, direct, right
+            right = tmp[1:]
+        return direct, right
 
 
 
