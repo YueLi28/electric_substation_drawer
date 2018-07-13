@@ -9,10 +9,12 @@ nodeSize = {"daozha": (48, 58), "daozhakai": (48, 58), "kaiguan": (24, 64), "sin
             "kaiguankai": (24, 64), "CN": (0, 0), "transformer2": (48, 60), "transformer3": (85, 66),
             "generator": (40, 40)}
 daozhastat = {}
+kaiguanstat = {}
 sideBusFP = ['Disconnector', 'Disconnector', 'Breaker', 'Disconnector']
 busPairFP = ['Disconnector', 'Disconnector']
 transBus = collections.defaultdict(list)
 globOffset = 200
+colorMap = {}
 
 class BusSkeleton:
     def __init__(self, cnID, x, y, w, dir):
@@ -21,6 +23,10 @@ class BusSkeleton:
         self.y = y
         self.w = w
         self.dir = dir
+        self.reverseC = False
+
+    def reverseConnector(self):
+        self.reverseC = True
 
     def GetLength(self):
         BNumber = max(adjDict[self.id]-1, 1)
@@ -43,7 +49,11 @@ def reset():
     global HorizontalBusPair
     global transBus
     global globOffset
+    global kaiguanstat
+    global colorMap
 
+    colorMap = {}
+    kaiguanstat = {}
     globOffset = 400
     HorizontalBusPair = {}
     VerticalBusPair = {}

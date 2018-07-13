@@ -8,22 +8,21 @@ class TailDrawer:
         self.x = x
         self.y = y
         self.node = node
-        self.fromNodes = fromNodes[0]
+        self.fromNodes = fromNodes
         self.direction = direction
         self.headL = headLength
         self.canvas = canv
-        if len(fromNodes)>1:
-            raise ValueError("fromNodes size too large!")
 
 
-    def findSinglePath(self, node, fromNode):
+
+    def findSinglePath(self, node, fromNodes):
         res = []
         isEnd = True
-        future = [x for x in glob.adjDict[node] if x != fromNode]
+        future = [x for x in glob.adjDict[node] if x not in fromNodes]
         while len(future) == 1 and "transformer" not in node and "ACline" not in node:
             res+=[node]
-            node, fromNode = future[0], node
-            future = [x for x in glob.adjDict[node] if x != fromNode]
+            node, fromNodes = future[0], [node]
+            future = [x for x in glob.adjDict[node] if x not in  fromNodes]
         res += [node]
         if node in glob.BusCNID:
             isEnd = True
@@ -34,15 +33,15 @@ class TailDrawer:
 
 
 
-    def newDraw(self, node, fromNode, x, y, dir):
+    def newDraw(self, node, fromNodes, x, y, dir):
         compHead = False
-        neighbors = [i for i in glob.adjDict[node] if i != fromNode]
+        neighbors = [i for i in glob.adjDict[node] if i not in fromNodes]
         tgtY = 0
         if len(neighbors) == 0:
             self.drawBranch(x, y, self.headL, [node], dir)
         elif len(neighbors) == 1:
             #print "DRAW: ", node, "FROM", fromNode
-            path, isEnd = self.findSinglePath(node, fromNode)
+            path, isEnd = self.findSinglePath(node, fromNodes)
             newDir = dir
             if path[-1] in glob.BusDict:
                 compHead = True
@@ -53,19 +52,22 @@ class TailDrawer:
                     newDir = "up"
             newY = self.drawBranch(x, y, self.headL, path, newDir)
             if not isEnd:
+#                print "PATH:", path, glob.BusCNID
                 self.newDraw(path[-1], path[-2], x, newY, newDir)
             elif compHead:
                 self.drawLine(x,newY,x,tgtY)
         else:
-            paths = [self.findSinglePath(i, node) for i in neighbors]
+            paths = [self.findSinglePath(i, [node]) for i in neighbors]
+            #print paths
             onlyPaths = [i[0] for i in paths]
             direct,right = self.findDirectTail(onlyPaths)
             for p in direct:
-                self.newDraw(p[0], node, x, y, dir)
+                self.newDraw(p[0], [node], x, y, dir)
             for p in right:
                 x += 40
                 self.drawLine(x-40, y, x, y)
-                self.newDraw(p[0], node, x, y, dir)
+                #print p[0], [node]
+                self.newDraw(p[0], [node], x, y, dir)
 
 
 

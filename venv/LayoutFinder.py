@@ -68,7 +68,62 @@ class LayoutFinder:
         elif len(self.buses) == 3:
             return self.determineLayout3()
         else:
-            raise ValueError("NOT Handled Yet")
+            return self.determineLayout4()
+
+
+
+    def findVertical(self, cn):
+        branchHeads = [x for x in glob.adjDict[cn] if "BUS" not in x]
+        busPairFP = []
+        for h in branchHeads:
+            lines = [[cn] + x for x in Utility.findTail(h, [cn])]
+            for line in lines:
+                if line[-1] in self.busCN:
+                    if line[-1] != cn:
+                        l = [x.split("#")[0] for x in line if "CN" not in x]
+                        if l == glob.busPairFP and len(lines)!=1:
+                            busPairFP.append(line[-1])
+                    else:
+                        raise ValueError("SELF CONNECTED")
+        return busPairFP
+
+    def findHorizontal(self, cn):
+        branchHeads = [x for x in glob.adjDict[cn] if "BUS" not in x]
+        busConnector = []
+        for h in branchHeads:
+            lines = [[cn] + x for x in Utility.findTail(h, [cn])]
+            for line in lines:
+                if line[-1] in self.busCN:
+                    if line[-1] != cn:
+                        l = [x.split("#")[0] for x in line if "CN" not in x]
+                        if len(l) == 3 or len(l)==1:
+                            busConnector.append(line[-1])
+                    else:
+                        raise ValueError("SELF CONNECTED")
+        return busConnector
+
+    def determineLayout4(self):
+        stats = [(cn, self.newCheckStat(cn)) for cn in self.buses]
+        for cn in self.buses:
+            tmp = self.findVertical(cn)
+            if len(set(tmp)) == 1:
+                glob.AddVerticalBusPair(cn, tmp[0])
+            else:
+                print tmp, cn
+                raise ValueError("AAAA")
+            tmp = [x for x in self.findHorizontal(cn) if x!=glob.VerticalBusPair[cn]]
+            glob.AddHorizontalBusPair(cn, tmp[0])
+            b1, b2 = cn, tmp[0]
+        b3, b4 = glob.VerticalBusPair[b1],glob.VerticalBusPair[b2]
+
+        w1,w2 = self.getEstimatedLength(b1), self.getEstimatedLength(b2)
+        glob.placeBus(b1, self.x - w1 / 2 - 50, self.y, w1, self.dir)
+        glob.placeBus(b2, self.x + w2 / 2 + 50, self.y, w2, self.dir)
+        glob.placeBus(b3, self.x - w1 / 2 - 50, self.y+50, w1, self.dir)
+        glob.placeBus(b4, self.x + w2 / 2 + 50, self.y+50, w2, self.dir)
+        glob.BusDict[b1].reverseConnector()
+        return [b1,b2,b3,b4]
+
 
 
 
@@ -77,8 +132,8 @@ class LayoutFinder:
         busD = self.checkStat(b1)[0]
         if self.is32:
             glob.AddVerticalBusPair(b1, b2)
-            glob.placeBus(b1, self.x, self.y + 350 + 100*self.offset32, 1000, self.dir)
-            glob.placeBus(b2, self.x, self.y - 350 - 100*self.offset32, 1000, self.dir)
+            glob.placeBus(b1, self.x, self.y + 250 + 100*self.offset32, 1000, self.dir)
+            glob.placeBus(b2, self.x, self.y - 250 - 100*self.offset32, 1000, self.dir)
             return [b1,b2]
         if busD[1] > busD[0]:#vertical pair
             glob.AddVerticalBusPair(b1, b2)
@@ -124,6 +179,8 @@ class LayoutFinder:
                     maxB = bStat[1]
             if maxCN == None:#3 bus horizontally aligned
                 b1, b2, b3 = self.buses
+                glob.AddHorizontalBusPair(b1, b2)
+                glob.AddHorizontalBusPair(b2, b3)
                 glob.placeBus(b1, self.x - 600 - 50, self.y, 600, self.dir)
                 glob.placeBus(b2, self.x, self.y, 600, self.dir)
                 glob.placeBus(b3, self.x + 600 + 50, self.y, 600, self.dir)
@@ -160,8 +217,8 @@ class LayoutFinder:
                     checkSideBus[0] += 1
                 else:
                     checkSideBus[1] += 1
-            if len(tmpLines) == 1 and len(tmpLines[0]) >= 19 and (len(tmpLines[0]) - 19)%6==0: #500 volt station
-                self.offset32 = max(self.offset32, (len(tmpLines[0])-19)/6)
+            if len(tmpLines) == 1 and len(tmpLines[0]) >= 13 and (len(tmpLines[0]) - 13)%6==0: #500 volt station
+                self.offset32 = max(self.offset32, (len(tmpLines[0])-13)/6)
                 self.is32 = True
 
             busD[Otherbus] += 1
@@ -187,4 +244,5 @@ class LayoutFinder:
                     else:
                         raise ValueError("SELF CONNECTED")
         return sideBusFP, busPairFP, busConnector
+
 

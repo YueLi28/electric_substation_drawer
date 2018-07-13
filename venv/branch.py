@@ -78,7 +78,7 @@ class Branch:
             if i[-1] in glob.BusCNID and glob.isPairEnd(i[-1], self.parent.cnID):
                 if len(i) == 2 or len(i) == 4 or len(i) == 6:#Have Assumed only one pair across 2 lines
                     bridge = i[:-1]
-                    newX, newY = self.drawConnection(self.x, self.y, 50, i, self.direction, 40)
+                    newX, newY = self.drawConnection(self.x, self.y, i, self.direction)
                     if not self.isSingle:
                         mididx = len(bridge)/2
                         if "CN" not in bridge[mididx]:
@@ -116,10 +116,10 @@ class Branch:
                     if self.find500BranchDirReversed(tails):
                         tgtX, tgtY = self.x + reversedDirOffset, self.y + 50
                         reversedDirOffset+=150
-                        newDir = self.direction
+                        newDir = "down"
                     else:
                         tgtX, tgtY = self.x + dirOffset, otherBusY - 50
-                        newDir = reverseDirect(self.direction)
+                        newDir = "up"
                         dirOffset += 150
                     self.canvas.drawLine(x, newY, tgtX, newY)
                     self.canvas.drawLine(tgtX, newY, tgtX, tgtY)
@@ -127,22 +127,7 @@ class Branch:
             else:
                 self.canvas.drawLine(x, newY, x, otherBusY)
 
-
-
-    def drawHorizontalConnector(self, bus2):
-        tmp = findTail(self.node, self.fromNode)
-        connector = tmp[0][:-1]
-        connector = map(cleanElement, connector)
-        endX = bus2.x - bus2.length/2
-        endY = bus2.y
-        self.canvas.drawBranch(self.x, self.y, 40, connector[:len(connector)/2], self.direction)
-        floatY = self.canvas.drawBranch(endX, endY, 40, connector[len(connector)/2+1:], self.direction)
-        connectorNode = connector[len(connector) / 2]
-        self.canvas.drawFloat(self.x, floatY, endX, connectorNode)
-
-            #print len(tmp), tmp
-
-    def drawConnection(self, posX, posY, linegap, connector, direction, hLen):
+    def drawConnection(self, posX, posY, connector, direction):
         tgtBus = connector[-1]
         connector = connector[:-1]
         connector = map(cleanElement, connector)
@@ -166,8 +151,6 @@ class Branch:
             else:
                 tgt = max(startY, endY) + 40
                 h1, h2 = abs(tgt - startY), abs(tgt - endY)
-
-
 
         self.canvas.drawBranch(startX, startY, h1, connector[:connectorIDX], direction)
         floatY = self.canvas.drawBranch(endX, endY, h2, connector[connectorIDX+1:][::-1], direction)

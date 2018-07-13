@@ -35,7 +35,10 @@ def cleanElement(element):
         else:
             elementName = "daozhakai"
     if elementName == "Breaker":
-        elementName = "kaiguan"
+        if glob.kaiguanstat[int(id)] == 1:
+            elementName = "kaiguankai"
+        else:
+            elementName = "kaiguan"
     if elementName == "l_oad" or elementName == "C_P":
         elementName = "singlearrow"
     if elementName == "ACline":

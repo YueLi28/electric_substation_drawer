@@ -44,6 +44,9 @@ class Bus:
         self.branches = []
         self.reversedBranches = []
         self.pairBus = None
+        self.reversC = False
+        if glob.BusDict[cnID].reverseC:
+            self.reversC = True
 
 
     def setPairBus(self, p):
@@ -83,7 +86,7 @@ class Bus:
             xStart -= 30
         for n in layout_branches:
             if direction != self.direction:#reversed, add a random number to avoid line overlap
-                n.SetLayout(xStart+random.randint(-50, 50), self.y, direction)
+                n.SetLayout(xStart, self.y, direction)
             else:
                 n.SetLayout(xStart, self.y, direction)
             xStart += n.xSize + gap
@@ -94,6 +97,8 @@ class Bus:
         ct = 1
         for n in not_layout_branches:
             tmpdir = reverseDirect(tmpdir)
+            if self.reversC:
+                tmpdir = reverseDirect(tmpdir)
             n.SetLayout(self.x+self.length/2-15*ct, self.y, tmpdir)
             ct+=1
 
@@ -111,6 +116,8 @@ class Bus:
             each.draw()
         for each in self.reversedBranches:
             each.draw()
+
+
 
 
 
@@ -159,13 +166,7 @@ class Canvas:
         return res
 
     def drawTail(self, x, y, node, fromNodes, direction, headLength=40):
-        if len(fromNodes) > 1:
-            nodes = self.tmpFindNewTail(node, fromNodes)
-            if len(nodes) > 1:
-                raise ValueError("node size not normal")
-            if len(nodes) == 0:#a bridge
-                return
-            node, fromNodes = nodes[0], [node]
+
         drawer = TailDrawer(x, y, node, fromNodes, direction, self, headLength)
         drawer.draw()
 

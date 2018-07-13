@@ -20,14 +20,16 @@ class drawer():
 
 
     def __init__(self, stationID):
+        self.colorMap = {220: "red", 35: "yellow", 10: "blue"}
+        self.colorHead = {}
         glob.reset()
         self.ID = stationID
         url = "http://192.168.2.26:9000/query/TwoOptionsID?TopoID="+str(stationID)
         response = urllib.urlopen(url)
         data = json.loads(response.read())
         self.name =  data["results"][0]["topo_equal"][0]["attributes"]["Sub"]
-        print self.name
         self.subID = data["results"][0]["topo_equal"][0]["attributes"]["subid"]
+        print self.name, stationID, "->", self.subID
         datasets = data["results"][1]["@@setedge"]
 
         self.adjDict = collections.defaultdict(set)
@@ -52,7 +54,33 @@ class drawer():
                     self.busCN.add(bCN)
             if each["v_type"] == "Disconnector":
                 glob.daozhastat[each["attributes"]["id"]] = each["attributes"]["point"]
+            if each["v_type"] == "Breaker":
+                glob.kaiguanstat[each["attributes"]["id"]] = each["attributes"]["point"]
+            if "transformer" in each["v_type"]:
+                self.colorHead[each["v_type"]+"#"+each["v_id"]]=each["attributes"]["volt"]
+
         glob.fillRelation(self.adjDict, self.busCN)
+        self.coloring()
+
+
+    def tainting(self, h, color):
+        visited = [h]
+        future = self.adjDict[h][:]
+        while future:
+            tmp = future.pop()
+            if tmp in visited:
+                continue
+            visited.append(tmp)
+            if "transformer" not in tmp:
+                glob.colorMap[tmp] = color
+                future.extend(self.adjDict[tmp])
+
+
+    def coloring(self):
+        for h in self.colorHead:
+            color = self.colorMap[self.colorHead[h]]
+            self.tainting(h, color)
+        print glob.colorMap
 
     def isVisited(self):
         if len(glob.visitedBusCN) == len(glob.visitedBusCN.union(self.busCN)):
@@ -110,7 +138,7 @@ class drawer():
         kset.sort()
         lowVolt, midVolt, highVolt = kset
         self.drawBuses(self.VoltBUSDict[highVolt], -600, -800, "up", canv)
-        self.drawBuses(self.VoltBUSDict[midVolt], 600, -800, "up", canv)
+        self.drawBuses(self.VoltBUSDict[midVolt], 1200, -800, "up", canv)
         self.drawBuses(self.VoltBUSDict[lowVolt], -600, 0, "down", canv)
 
     def draw4Section(self, canv):
@@ -142,7 +170,7 @@ class drawer():
         #self.drawHorizontalBusPair(x)
         #self.drawVerticalBusPair(x)
         if isTest:
-            x.printToFile("/tmp/stationDraw/"+str(self.subID)+".json")
+            x.printToFile("/tmp/stationDraw/"+str(self.subID)+".js")
         else:
             x.printToFile()
 
@@ -191,16 +219,20 @@ class tester:
     def __init__(self):
         ct = collections.Counter()
         count = 0
-        with open("/tmp/test3.csv","r") as f:
+        with open("/tmp/test4.csv","r") as f:
             ids = [x.strip() for x in f.readlines() if int(x)>0]
             for id in ids:
                 #if id ==
-                x = drawer(id)
+                try:
+                    x = drawer(id)
+                except:
+                    print "EMPTY: ", id
+                    continue
                 count+=1
                 if x.isVisited():
                     continue
                 try:
-                    print id, x.VoltBUSDict
+                    print id, [[e, len(x.VoltBUSDict[e])] for e in x.VoltBUSDict]
                     x.newdraw(True)
                 except Exception, err:
                     print "\tCANNOT DRAW: ", id
@@ -208,7 +240,7 @@ class tester:
 import operator
 
 isTest = False
-inp = 17183
+inp = 17720
 #k = tester()
 #25745: Vertical bus pair
 #25559: Single bus with segmentation and side bus
