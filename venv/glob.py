@@ -15,6 +15,13 @@ busPairFP = ['Disconnector', 'Disconnector']
 transBus = collections.defaultdict(list)
 globOffset = 200
 colorMap = {}
+colorRGB = {"red":"rgb(250,0,0)", "blue": "rgb(0,0,250)", "yellow": "rgb(250,250,0)", "white":"rgb(255,255,255)", "green":"rgb(0,250,150)", "cherry":"rgb(200,40,150)"}
+
+
+def getColorRGB(colorName):
+    return colorRGB[colorName]
+
+
 
 class BusSkeleton:
     def __init__(self, cnID, x, y, w, dir):
@@ -24,7 +31,10 @@ class BusSkeleton:
         self.w = w
         self.dir = dir
         self.reverseC = False
+        self.is32 = False
 
+    def define32(self):
+        self.is32 = True
     def reverseConnector(self):
         self.reverseC = True
 

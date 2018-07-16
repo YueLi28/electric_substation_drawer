@@ -113,7 +113,7 @@ class Transformer3port:
                 drawableHead = [x for x in self.adjDict[h] if x != self.np][0]
                 x,y = self.getNextPort()
                 if y == self.y:#horizontal
-                    self.canv.drawLine(x,y,x+40,y)
+                    self.canv.drawLine(x,y,x+40,y,glob.colorMap[h])
                     self.canv.drawTail(x+40, y, drawableHead, [h], self.direction, 73)
                 else: #vertical
                     self.canv.drawTail(x, y, drawableHead, [h], self.direction)

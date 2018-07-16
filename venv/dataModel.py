@@ -111,7 +111,7 @@ class Bus:
         self.InitializeBranches()
         self.generateLayouts()
 
-        self.canvas.drawLine(self.x - self.length / 2 , self.y, self.x + self.length / 2 , self.y, 3.5)
+        self.canvas.drawLine(self.x - self.length / 2 , self.y, self.x + self.length / 2 , self.y, glob.colorMap[self.cnID], 3.5)
         for each in self.branches:
             each.draw()
         for each in self.reversedBranches:
@@ -140,18 +140,20 @@ def findTransformers(node, visitedNode):
 
 class Canvas:
     def __init__(self, stationName):
-        self.canvas = {"v": "6.2.2", "d":[],"p": {"background":"rgb(255,255,255)", "layers":["0",1], "autoAdjustIndex":True, "hierarchicalRendering":True}}
+        self.canvas = {"v": "6.2.2", "d":[],"p": {"background":"rgb(0,0,0)", "layers":["0",1], "autoAdjustIndex":True, "hierarchicalRendering":True}}
         self.allBus = {}
         self.name = stationName
         self.generateName()
 
     def drawFloat(self, x, y, eX, ele):
+        color =glob.colorMap[ele]
+        ele = cleanElement(ele)
         if ele != "CN":
-            n = Node(ele, float(x + eX) / 2, y, "up", True)
+            n = Node(ele, float(x + eX) / 2, y, "up", color, True)
             self.canvas["d"].append(n.getRepresentation())
         complement = float(eX - x) / 2 - float(glob.nodeSize[ele][1]) / 2
-        self.drawLine(x, y, x + complement, y)
-        self.drawLine(eX, y, eX - complement, y)
+        self.drawLine(x, y, x + complement, y, color)
+        self.drawLine(eX, y, eX - complement, y, color)
 
     def generateName(self):
         namej = {"c":"ht.Text", "i":1, "p": {"name":"文字", "layer":1, "position":{"x":-800, "y":-800}},
@@ -194,6 +196,7 @@ class Canvas:
             return y
         defineTrans = False
         hasTrans = False
+        color = glob.colorMap[components[0]]
         if "transformer" in components[-1]:
             hasTrans = True
             transName = components[-1]
@@ -203,19 +206,19 @@ class Canvas:
                 components = components[:-1]
                 portX, portY = tran.getCorrectPort(x,y)
                 if portY == tran.y:
-                    self.drawLine(portX, portY, x, portY)
+                    self.drawLine(portX, portY, x, portY, glob.colorMap[components[-1]])
                     portX = x
                 else:
                     x = portX
             else:
                 defineTrans = True
-        components = map(cleanElement, components)
+
         if direction == "down":
             sign = 1
         else:
             sign = -1
         hLen *= sign
-        self.drawLine(x, y, x, y + hLen)
+        self.drawLine(x, y, x, y + hLen, color)
         y += hLen
 
         def update(y, c):  # move down 1/2 height of c
@@ -228,35 +231,36 @@ class Canvas:
             return y
 
         res = []
+        components = map(cleanElement, components)
         for c in components:
             if c == "CN":
-                self.drawLine(x, y, x, y)
+                self.drawLine(x, y, x, y, "red")
             else:
                 if "transformer" in c and defineTrans:
                     oldy = y
                     y = update(y, c)
                     y = update(y, c)
-                    self.drawLine(x, oldy, x, y)
+                    self.drawLine(x, oldy, x, y, color)
                     for t in glob.AllTrans:
                         if "three" in glob.AllTrans[t].name and abs(glob.AllTrans[t].y - y) < 66:
                             oldy = y
                             y = update(y, c)
                             y = update(y, c)
-                            self.drawLine(x,oldy,x,y)
+                            self.drawLine(x,oldy,x,y, color)
 
                 y = update(y, c)
-                n = Node(c, x, y, direction)
+                n = Node(c, x, y, direction, color)
                 res.append(n.getRepresentation())
                 y = update(y, c)
         self.canvas["d"].extend(res)
         if defineTrans:
             self.DefineTransformerLoc(transName, x, y, direction,self)
         elif hasTrans:
-            self.drawLine(x, y, portX, portY)
+            self.drawLine(x, y, portX, portY, color)
         return y
 
-    def drawLine(self, startX, startY, endX, endY, borderWidth=2):
-        l = Line(startX, startY, endX, endY, borderWidth)
+    def drawLine(self, startX, startY, endX, endY, color, borderWidth=2):
+        l = Line(startX, startY, endX, endY, color, borderWidth)
         self.canvas["d"].append(l.getRepresentation())
 
     def __str__(self):
@@ -271,7 +275,7 @@ class Canvas:
 
 
 class Line:
-    def __init__(self, startX, startY, endX, endY, borderWidth):
+    def __init__(self, startX, startY, endX, endY, color, borderWidth):
         self.representation = {}
         self.startX, self.startY = startX, startY
         self.endX, self.endY = endX, endY
@@ -281,7 +285,7 @@ class Line:
                                     "position": {"x": float(self.startX + self.endX) / 2,
                                                  "y": float(self.startY + self.endY) / 2}, "points": {}}
         self.representation["p"]["points"]["__a"] = [{"x": startX, "y": startY}, {"x": endX, "y": endY}]
-        self.representation["s"] = {"shape.border.width": borderWidth, "shape.border.color": "rgb(250,0,0)"}
+        self.representation["s"] = {"shape.border.width": borderWidth, "shape.border.color": glob.getColorRGB(color)}
 
     def __str__(self):
         return json.dumps(self.representation, indent=2)
@@ -294,7 +298,8 @@ class Line:
 
 
 class Node:
-    def __init__(self, name, x, y, direction, isFloat=False):
+    def __init__(self, name, x, y, direction, color, isFloat=False):
+        self.color = color
         self.name = name.split("#")[0]
         self.x = float(x)
         self.y = float(y)
@@ -313,7 +318,10 @@ class Node:
         self.representation["p"] = {"name": self.name, "layer": 1,
                                     "position": {"x": self.x, "y": self.y}}
         if self.name != "CN":
-            self.representation["p"]["image"] = "symbols/electricity/%s.json" % self.name
+            if "transformer" in self.name:
+                self.representation["p"]["image"] = "symbols/electricity/%s.json" % self.name
+            else:
+                self.representation["p"]["image"] = "symbols/electricity/%s%s.json" % (self.name, self.color)
         self.representation["s"] = {"label": ""}
         if self.name == "singlearrow" and self.direction == "up":
             self.representation["p"]["rotation"] = 3.14159,

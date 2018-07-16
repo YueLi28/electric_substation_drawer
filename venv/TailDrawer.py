@@ -37,6 +37,7 @@ class TailDrawer:
         compHead = False
         neighbors = [i for i in glob.adjDict[node] if i not in fromNodes]
         tgtY = 0
+        color = glob.colorMap[node]
         if len(neighbors) == 0:
             self.drawBranch(x, y, self.headL, [node], dir)
         elif len(neighbors) == 1:
@@ -55,7 +56,7 @@ class TailDrawer:
 #                print "PATH:", path, glob.BusCNID
                 self.newDraw(path[-1], path[-2], x, newY, newDir)
             elif compHead:
-                self.drawLine(x,newY,x,tgtY)
+                self.canvas.drawLine(x,newY,x,tgtY,color)
         else:
             paths = [self.findSinglePath(i, [node]) for i in neighbors]
             #print paths
@@ -65,7 +66,7 @@ class TailDrawer:
                 self.newDraw(p[0], [node], x, y, dir)
             for p in right:
                 x += 40
-                self.drawLine(x-40, y, x, y)
+                self.canvas.drawLine(x-40, y, x, y,color)
                 #print p[0], [node]
                 self.newDraw(p[0], [node], x, y, dir)
 
@@ -99,8 +100,7 @@ class TailDrawer:
 
     def drawBranch(self, a1, a2, a3, a4, a5):
         return self.canvas.drawBranch(a1,a2,a3,a4,a5)
-    def drawLine(self, a1, a2, a3, a4):
-        return self.canvas.drawLine(a1, a2, a3, a4)
+
 
     def cleanElement(self, element):
         elementName = element.split("#")[0]

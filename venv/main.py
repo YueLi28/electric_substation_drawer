@@ -20,7 +20,7 @@ class drawer():
 
 
     def __init__(self, stationID):
-        self.colorMap = {220: "red", 35: "yellow", 10: "blue"}
+        self.colorMap = {220: "red", 35: "yellow", 110: "green", 10: "blue", 0:"cherry", 500:"cherry", 4:"white", 11:"white"}
         self.colorHead = {}
         glob.reset()
         self.ID = stationID
@@ -64,6 +64,7 @@ class drawer():
 
 
     def tainting(self, h, color):
+        glob.colorMap[h] = color
         visited = [h]
         future = self.adjDict[h][:]
         while future:
@@ -80,7 +81,6 @@ class drawer():
         for h in self.colorHead:
             color = self.colorMap[self.colorHead[h]]
             self.tainting(h, color)
-        print glob.colorMap
 
     def isVisited(self):
         if len(glob.visitedBusCN) == len(glob.visitedBusCN.union(self.busCN)):
@@ -240,7 +240,7 @@ class tester:
 import operator
 
 isTest = False
-inp = 17720
+inp = 17870
 #k = tester()
 #25745: Vertical bus pair
 #25559: Single bus with segmentation and side bus

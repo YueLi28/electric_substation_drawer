@@ -1,6 +1,7 @@
 from Utility import *
 import glob
 import random
+import SizeEstimator
 DrawnTail = set()
 
 
@@ -20,6 +21,7 @@ class Branch:
         self.newFindProperty(node, fromNode)
         self.xSize = 0
         self.ySize = 0
+        SizeEstimator.estimateWidth(self)
 
 
     def newFindProperty(self, node, fromNode):
@@ -32,10 +34,10 @@ class Branch:
             if self.parent.cnID in glob.HorizontalBusPair and t[-1] == glob.HorizontalBusPair[self.parent.cnID]:
                 self.isPaired = True
                 self.WithinLayout = False
-            for k in t:
-                if "transformer" in k:
+            if "transformer" in t[-1]:
+                self.transName = t[-1]
+                if not glob.BusDict[self.parent.cnID].is32:
                     self.isReversed = True
-                    self.transName = k
 
     def SetLayout(self, x, y, direction):
         self.x = x
@@ -102,6 +104,7 @@ class Branch:
         return False
 
     def draw500Branch(self, x, y, eles, dir):
+        color = glob.colorMap[eles[0]]
         newY = y
         dirOffset = 60
         reversedDirOffset = 40
@@ -115,22 +118,21 @@ class Branch:
                 if len(tails) > 0:
                     if self.find500BranchDirReversed(tails):
                         tgtX, tgtY = self.x + reversedDirOffset, self.y + 50
-                        reversedDirOffset+=150
+                        reversedDirOffset+=50
                         newDir = "down"
                     else:
                         tgtX, tgtY = self.x + dirOffset, otherBusY - 50
                         newDir = "up"
-                        dirOffset += 150
-                    self.canvas.drawLine(x, newY, tgtX, newY)
-                    self.canvas.drawLine(tgtX, newY, tgtX, tgtY)
+                        dirOffset += 50
+                    self.canvas.drawLine(x, newY, tgtX, newY, color)
+                    self.canvas.drawLine(tgtX, newY, tgtX, tgtY, color)
                     self.canvas.drawTail(tgtX, tgtY, seghead, eles, newDir)
             else:
-                self.canvas.drawLine(x, newY, x, otherBusY)
+                self.canvas.drawLine(x, newY, x, otherBusY, color)
 
     def drawConnection(self, posX, posY, connector, direction):
         tgtBus = connector[-1]
         connector = connector[:-1]
-        connector = map(cleanElement, connector)
         connectorIDX = len(connector)/2
         connectorNode = connector[connectorIDX]
         startX = posX
@@ -143,7 +145,7 @@ class Branch:
             endX += offSet
             endY = startY
         else:#vertical pairs
-            endX = startX + glob.nodeSize[connectorNode][1] + 40
+            endX = startX + glob.nodeSize[cleanElement(connectorNode)][1] + 40
             endY = glob.BusDict[tgtBus].y
             if direction == "up":
                 tgt = min(startY, endY) - 40

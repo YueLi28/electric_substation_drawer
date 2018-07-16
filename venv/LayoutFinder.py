@@ -132,8 +132,10 @@ class LayoutFinder:
         busD = self.checkStat(b1)[0]
         if self.is32:
             glob.AddVerticalBusPair(b1, b2)
-            glob.placeBus(b1, self.x, self.y + 250 + 100*self.offset32, 1000, self.dir)
-            glob.placeBus(b2, self.x, self.y - 250 - 100*self.offset32, 1000, self.dir)
+            glob.placeBus(b1, self.x, self.y + 250 + 100*self.offset32, 1500, self.dir)
+            glob.placeBus(b2, self.x, self.y - 250 - 100*self.offset32, 1500, self.dir)
+            glob.BusDict[b1].define32()
+            glob.BusDict[b2].define32()
             return [b1,b2]
         if busD[1] > busD[0]:#vertical pair
             glob.AddVerticalBusPair(b1, b2)
