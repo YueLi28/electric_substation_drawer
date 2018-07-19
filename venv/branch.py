@@ -1,4 +1,5 @@
 from Utility import *
+import transformer
 import glob
 import random
 import SizeEstimator
@@ -19,9 +20,10 @@ class Branch:
         self.canvas = canv
         self.parent = bus
         self.newFindProperty(node, fromNode)
-        self.xSize = 0
+        #self.xSize = 0
         self.ySize = 0
-        SizeEstimator.estimateWidth(self)
+        self.direction = None
+        #SizeEstimator.estimateWidth(self)
 
 
     def newFindProperty(self, node, fromNode):
@@ -34,10 +36,15 @@ class Branch:
             if self.parent.cnID in glob.HorizontalBusPair and t[-1] == glob.HorizontalBusPair[self.parent.cnID]:
                 self.isPaired = True
                 self.WithinLayout = False
-            if "transformer" in t[-1]:
+            if "transformer" in t[-1] and not self.parent.is32:#has transformer
                 self.transName = t[-1]
-                if not glob.BusDict[self.parent.cnID].is32:
+                if "two" in t[-1]:
+                    otherport = [x for x in glob.adjDict[t[-1]] if "transformer" in x][0]
+                    if transformer.Transformer2port.BusConnected(otherport, t[-1]):
+                       self.isReversed = True
+                else:
                     self.isReversed = True
+
 
     def SetLayout(self, x, y, direction):
         self.x = x
@@ -64,10 +71,10 @@ class Branch:
         for each in tmp:
             if each[-1] in glob.BusCNID:
                 DrawnTail.add(each[-2])
-            if "two_port_transformer" in each[-1]:
-                transK =each[-1].split("#")[1].split(".")[0]
-                if transK in glob.AllTrans:
-                    self.x = glob.AllTrans[transK].x
+            # if "two_port_transformer" in each[-1]:
+            #     transK =each[-1].split("#")[1].split(".")[0]
+            #     if transK in glob.AllTrans:
+            #         self.x = glob.AllTrans[transK].x
         headL = self.findheadL()
         if self.isPaired:
             self.drawPair()
@@ -77,8 +84,8 @@ class Branch:
     def drawPair(self):
         tmp = findTail(self.node, self.fromNode)
         for i in tmp:
-            if i[-1] in glob.BusCNID and glob.isPairEnd(i[-1], self.parent.cnID):
-                if len(i) == 2 or len(i) == 4 or len(i) == 6:#Have Assumed only one pair across 2 lines
+            if i[-1] in glob.BusCNID and glob.isPairEnd(i[-1], self.parent.cnID): #draw the pair
+                if (len(i) == 2 or len(i) == 4 or len(i) == 6) and not self.parent.is32:#Have Assumed only one pair across 2 lines
                     bridge = i[:-1]
                     newX, newY = self.drawConnection(self.x, self.y, i, self.direction)
                     if not self.isSingle:
@@ -104,10 +111,10 @@ class Branch:
         return False
 
     def draw500Branch(self, x, y, eles, dir):
-        color = glob.colorMap[eles[0]]
+        color = glob.voltMap[eles[0]]
         newY = y
-        dirOffset = 60
-        reversedDirOffset = 40
+        dirOffset = 40
+        reversedDirOffset = 60
         otherBusY = glob.BusDict[eles[-1]].y
         for i in range(0, len(eles)+1-6, 6):
             seg = eles[i:i+6]
@@ -116,14 +123,15 @@ class Branch:
                 seghead = seg[-1]
                 tails = findTail(seghead, eles)
                 if len(tails) > 0:
+                    tailLength = SizeEstimator.estimateWidth(seghead, eles)
                     if self.find500BranchDirReversed(tails):
                         tgtX, tgtY = self.x + reversedDirOffset, self.y + 50
-                        reversedDirOffset+=50
+                        reversedDirOffset+=40+tailLength
                         newDir = "down"
                     else:
                         tgtX, tgtY = self.x + dirOffset, otherBusY - 50
                         newDir = "up"
-                        dirOffset += 50
+                        dirOffset += 40 +tailLength
                     self.canvas.drawLine(x, newY, tgtX, newY, color)
                     self.canvas.drawLine(tgtX, newY, tgtX, tgtY, color)
                     self.canvas.drawTail(tgtX, tgtY, seghead, eles, newDir)

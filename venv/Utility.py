@@ -25,20 +25,11 @@ def reverseDirect(direction):
         return "up"
 
 def cleanElement(element):
-    tmp = element.split("#")
-    if len(tmp) < 2:
-        return element
-    elementName, id = element.split("#")
+    elementName = element.split("#")[0]
     if elementName == "Disconnector":
-        if glob.daozhastat[int(id)] == 1:
-            elementName = "daozha"
-        else:
-            elementName = "daozhakai"
+        elementName = "daozha"
     if elementName == "Breaker":
-        if glob.kaiguanstat[int(id)] == 1:
-            elementName = "kaiguankai"
-        else:
-            elementName = "kaiguan"
+        elementName = "kaiguan"
     if elementName == "l_oad" or elementName == "C_P":
         elementName = "singlearrow"
     if elementName == "ACline":

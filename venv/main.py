@@ -20,7 +20,6 @@ class drawer():
 
 
     def __init__(self, stationID):
-        self.colorMap = {220: "red", 35: "yellow", 110: "green", 10: "blue", 0:"cherry", 500:"cherry", 4:"white", 11:"white"}
         self.colorHead = {}
         glob.reset()
         self.ID = stationID
@@ -58,13 +57,17 @@ class drawer():
                 glob.kaiguanstat[each["attributes"]["id"]] = each["attributes"]["point"]
             if "transformer" in each["v_type"]:
                 self.colorHead[each["v_type"]+"#"+each["v_id"]]=each["attributes"]["volt"]
+            if "BUS" in each["v_type"]:
+                self.colorHead[each["v_type"] + "#" + each["v_id"]] = each["attributes"]["volt"]
+            glob.infoMap[each["v_type"] + "#" + each["v_id"]] = each['attributes']
+
 
         glob.fillRelation(self.adjDict, self.busCN)
         self.coloring()
 
 
     def tainting(self, h, color):
-        glob.colorMap[h] = color
+        glob.voltMap[h] = color
         visited = [h]
         future = self.adjDict[h][:]
         while future:
@@ -73,14 +76,18 @@ class drawer():
                 continue
             visited.append(tmp)
             if "transformer" not in tmp:
-                glob.colorMap[tmp] = color
+                glob.voltMap[tmp] = color
                 future.extend(self.adjDict[tmp])
 
 
     def coloring(self):
         for h in self.colorHead:
-            color = self.colorMap[self.colorHead[h]]
+            color = self.colorHead[h]
             self.tainting(h, color)
+        #if len(self.colorHead) == 0:#no transformer
+
+
+
 
     def isVisited(self):
         if len(glob.visitedBusCN) == len(glob.visitedBusCN.union(self.busCN)):
@@ -138,7 +145,7 @@ class drawer():
         kset.sort()
         lowVolt, midVolt, highVolt = kset
         self.drawBuses(self.VoltBUSDict[highVolt], -600, -800, "up", canv)
-        self.drawBuses(self.VoltBUSDict[midVolt], 1200, -800, "up", canv)
+        self.drawBuses(self.VoltBUSDict[midVolt], 1400, -800, "up", canv)
         self.drawBuses(self.VoltBUSDict[lowVolt], -600, 0, "down", canv)
 
     def draw4Section(self, canv):
@@ -147,7 +154,7 @@ class drawer():
         lowVolt, midlowVolt, midhighVolt, highVolt = kset
         self.drawBuses(self.VoltBUSDict[highVolt], -600, -800, "up", canv)
         self.drawBuses(self.VoltBUSDict[midhighVolt], 600, -800, "up", canv)
-        self.drawBuses(self.VoltBUSDict[midlowVolt], -600, 0, "down", canv)
+        self.drawBuses(self.VoltBUSDict[midlowVolt], -630, 0, "down", canv)
         self.drawBuses(self.VoltBUSDict[lowVolt], 600, 0, "down", canv)
 
     def newdraw(self, isTest):
@@ -170,7 +177,7 @@ class drawer():
         #self.drawHorizontalBusPair(x)
         #self.drawVerticalBusPair(x)
         if isTest:
-            x.printToFile("/tmp/stationDraw/"+str(self.subID)+".js")
+            x.printToFile(u"/tmp/stationDraw/"+self.name+u".js")
         else:
             x.printToFile()
 
@@ -240,7 +247,7 @@ class tester:
 import operator
 
 isTest = False
-inp = 17870
+inp = 12530
 #k = tester()
 #25745: Vertical bus pair
 #25559: Single bus with segmentation and side bus

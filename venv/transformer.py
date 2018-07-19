@@ -43,7 +43,8 @@ class Transformer2port:
             x,y = self.getCorrectPort(0, 0)
             self.canv.drawTail(x, y, drawableHead, [t], self.direction)
 
-    def BusConnected(self, node, fromnode):
+    @staticmethod
+    def BusConnected(node, fromnode):
         future = [node]
         visited = [fromnode]
         while future:
@@ -53,7 +54,7 @@ class Transformer2port:
             visited.append(tmp)
             if tmp in glob.BusCNID:
                 return tmp
-            future.extend(self.adjDict[tmp])
+            future.extend(glob.adjDict[tmp])
         return None
 
 
@@ -107,13 +108,14 @@ class Transformer3port:
 
     def drawTails(self):
         tailHs = [x for x in self.adjDict[self.np] if x != self.name]
+        tailHs.sort(key=lambda x:glob.voltMap[x], reverse=True)
         for h in tailHs:
             bus = self.BusConnected(h, self.np)
             if bus == None:
                 drawableHead = [x for x in self.adjDict[h] if x != self.np][0]
                 x,y = self.getNextPort()
                 if y == self.y:#horizontal
-                    self.canv.drawLine(x,y,x+40,y,glob.colorMap[h])
+                    self.canv.drawLine(x,y,x+40,y,glob.voltMap[h])
                     self.canv.drawTail(x+40, y, drawableHead, [h], self.direction, 73)
                 else: #vertical
                     self.canv.drawTail(x, y, drawableHead, [h], self.direction)
