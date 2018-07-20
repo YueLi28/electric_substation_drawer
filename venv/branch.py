@@ -42,6 +42,9 @@ class Branch:
                     otherport = [x for x in glob.adjDict[t[-1]] if "transformer" in x][0]
                     if transformer.Transformer2port.BusConnected(otherport, t[-1]):
                        self.isReversed = True
+                    # else:
+                    #     if transformer.Transformer2port.hasGenerator(otherport, t[-1]) and self.direction == "up":
+                    #         self.isReversed = True
                 else:
                     self.isReversed = True
 

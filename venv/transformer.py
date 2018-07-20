@@ -57,7 +57,20 @@ class Transformer2port:
             future.extend(glob.adjDict[tmp])
         return None
 
-
+    @staticmethod
+    def hasGenerator(node, fromnode):
+        future = [node]
+        visited = [fromnode]
+        while future:
+            tmp = future.pop()
+            if tmp in visited:
+                continue
+            visited.append(tmp)
+            if "unit" in tmp:
+                return True
+            if tmp not in glob.BusCNID:
+                future.extend(glob.adjDict[tmp])
+        return False
 
 class Transformer3port:
     def __init__(self, name, x, y, direction, canv, adjDict):

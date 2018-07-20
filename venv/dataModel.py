@@ -65,9 +65,6 @@ class Bus:
         self.branches.sort(cmp=branchCMP)
         self.reversedBranches.sort(cmp=transformerBranchCMP)
 
-
-
-
     def generateLayouts(self):
         self.generateLayout(self.branches, self.direction, 0 )
         self.generateLayout(self.reversedBranches, reverseDirect(self.direction), 20)
@@ -87,10 +84,7 @@ class Bus:
         if self.cnID in glob.VerticalBusPair and self.cnID < glob.VerticalBusPair[self.cnID]:
             xStart -= 30
         for n in layout_branches:
-            if direction != self.direction:#reversed, add a random number to avoid line overlap
-                n.SetLayout(xStart, self.y, direction)
-            else:
-                n.SetLayout(xStart, self.y, direction)
+            n.SetLayout(xStart, self.y, direction)
             xStart += gap
         if len(not_layout_branches) > 2:
             raise ValueError("I do not know how to draw this")

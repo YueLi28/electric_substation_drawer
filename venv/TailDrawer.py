@@ -1,4 +1,5 @@
 from Utility import *
+import SizeEstimator
 import glob
 
 
@@ -64,11 +65,13 @@ class TailDrawer:
             direct,right = self.findDirectTail(onlyPaths)
             for p in direct:
                 self.newDraw(p[0], [node], x, y, dir)
+                offset = SizeEstimator.estimateWidth(p[0], [node])
             for p in right:
-                x += 40
-                self.canvas.drawLine(x-40, y, x, y,volt)
+                x += 40 + offset
+                self.canvas.drawLine(x-40-offset, y, x, y,volt)
                 #print p[0], [node]
                 self.newDraw(p[0], [node], x, y, dir)
+                offset = SizeEstimator.estimateWidth(p[0], [node])
 
 
 

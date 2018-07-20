@@ -18,7 +18,7 @@ class LayoutFinder:
 
 
     def getEstimatedLength(self, cnID):
-        return 100 * len(glob.adjDict[cnID])
+        return 300 * len(glob.adjDict[cnID])
 
 
     def FixedTransformer(self, buses):
