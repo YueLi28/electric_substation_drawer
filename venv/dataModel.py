@@ -66,13 +66,6 @@ class Canvas:
         drawer.draw()
 
             #raise ValueError("WRONG TAIL!", lines)
-
-
-    def findTransformerObj(self, transName):
-        transID = transName.split("#")[1].split(".")[0]
-        if transID in glob.AllTrans:
-            return glob.AllTrans[transID]
-
     def DefineTransformerLoc(self, transName, x, y, direction, can):
         transID = transName.split("#")[1].split(".")[0]
         if "three" in transName:
@@ -98,7 +91,7 @@ class Canvas:
         if "transformer" in components[-1]:
             hasTrans = True
             transName = components[-1]
-            tran = self.findTransformerObj(components[-1])
+            tran = findTransformerObj(components[-1])
             if tran is not None:
                 #x = transLoc[0]
                 components = components[:-1]

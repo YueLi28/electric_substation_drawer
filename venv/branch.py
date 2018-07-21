@@ -10,7 +10,7 @@ DrawnTail = set()
 
 
 class Branch:
-    def __init__(self, node, fromNode, canv, bus):
+    def __init__(self, node, fromNode, canv, bus, direction):
         self.node = node
         self.fromNode = fromNode
         self.isReversed = False
@@ -19,10 +19,13 @@ class Branch:
         self.isSingle = True
         self.canvas = canv
         self.parent = bus
-        self.newFindProperty(node, fromNode)
-        #self.xSize = 0
         self.ySize = 0
-        self.direction = None
+        self.direction = direction
+        self.transName = None
+        self.hasGen = False
+
+        self.newFindProperty(node, fromNode)
+
         #SizeEstimator.estimateWidth(self)
 
 
@@ -36,23 +39,34 @@ class Branch:
             if self.parent.cnID in glob.HorizontalBusPair and t[-1] == glob.HorizontalBusPair[self.parent.cnID]:
                 self.isPaired = True
                 self.WithinLayout = False
-            if "transformer" in t[-1] and not self.parent.is32:#has transformer
+            if "transformer" in t[-1] and (not self.parent.is32 or self.isSingle):#has transformer
                 self.transName = t[-1]
-                if "two" in t[-1]:
+                transObj = findTransformerObj(self.transName)
+                if transObj:
+                    tgtY = transObj.y
+                    if tgtY < self.parent.y:
+                        self.direction = "up"
+                    else:
+                        self.direction = "down"
+                elif "two" in t[-1]:
                     otherport = [x for x in glob.adjDict[t[-1]] if "transformer" in x][0]
-                    if transformer.Transformer2port.BusConnected(otherport, t[-1]):
-                       self.isReversed = True
-                    # else:
-                    #     if transformer.Transformer2port.hasGenerator(otherport, t[-1]) and self.direction == "up":
-                    #         self.isReversed = True
+                    if transformer.Transformer2port.BusConnected(otherport, t[-1]):# Connected to another bus
+                        self.direction = reverseDirect(self.direction)
+                    else:
+                        if transformer.Transformer2port.hasGenerator(otherport, t[-1]):
+                            self.direction = "down"
                 else:
-                    self.isReversed = True
+                    self.direction = reverseDirect(self.direction)
+            if "unit" in t[-1]:
+                self.hasGen = True
+        if not self.transName and self.hasGen:
+            self.direction = "down"
 
 
-    def SetLayout(self, x, y, direction):
+
+    def SetLayout(self, x, y):
         self.x = x
         self.y = y
-        self.direction = direction
 
 
     def findheadL(self):
@@ -128,11 +142,11 @@ class Branch:
                 if len(tails) > 0:
                     tailLength = SizeEstimator.estimateWidth(seghead, eles)
                     if self.find500BranchDirReversed(tails):
-                        tgtX, tgtY = self.x + reversedDirOffset, self.y + 50
+                        tgtX, tgtY = self.x + reversedDirOffset, self.y
                         reversedDirOffset+=40+tailLength
                         newDir = "down"
                     else:
-                        tgtX, tgtY = self.x + dirOffset, otherBusY - 50
+                        tgtX, tgtY = self.x + dirOffset, otherBusY
                         newDir = "up"
                         dirOffset += 40 +tailLength
                     self.canvas.drawLine(x, newY, tgtX, newY, color)

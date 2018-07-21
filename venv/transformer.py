@@ -7,6 +7,8 @@ class Transformer2port:
         self.canv = canv
         self.adjDict = adjDict
         self.direction = direction
+        self.TailDrawn = False
+
         if direction == "up":
             self.y = y + 33
             self.other = [self.x, self.y-30]
@@ -14,6 +16,7 @@ class Transformer2port:
             self.y = y - 33
             self.other = [self.x, self.y+30]
         self.arrangeBus()
+        self.drawTails()
 
     def getCorrectPort(self, x, y):
         return self.other
@@ -36,17 +39,25 @@ class Transformer2port:
             glob.transBus[bus].append(self)
 
     def drawTails(self):
+        if self.TailDrawn:
+            return
         t = self.findTailHead()
         bus = self.BusConnected(t, self.name)
-        if  bus== None:
+        if  bus == None:
             drawableHead = [x for x in self.adjDict[t] if x != self.name][0]
             x,y = self.getCorrectPort(0, 0)
-            self.canv.drawTail(x, y, drawableHead, [t], self.direction)
+            if self.direction == "up":
+                off = -40
+            else:
+                off = 40
+            self.canv.drawLine(x,y, x, y+off,glob.voltMap[t])
+            self.canv.drawTail(x, y+off, drawableHead, [t], self.direction)
+            self.TailDrawn = True
 
     @staticmethod
     def BusConnected(node, fromnode):
-        future = [node]
-        visited = [fromnode]
+        future = glob.adjDict[node][:]
+        visited = [fromnode, node]
         while future:
             tmp = future.pop()
             if tmp in visited:
@@ -54,7 +65,8 @@ class Transformer2port:
             visited.append(tmp)
             if tmp in glob.BusCNID:
                 return tmp
-            future.extend(glob.adjDict[tmp])
+            if "transformer" not in tmp:
+                future.extend(glob.adjDict[tmp])
         return None
 
     @staticmethod

@@ -15,9 +15,9 @@ def branchCMP(b1, b2):
     return 0
 
 def transformerBranchCMP(b1, b2):
-    if b1.isReversed and "three" in b1.transName:
+    if b1.isReversed and b1.transName and "three" in b1.transName:
         return 1
-    if b2.isReversed and "three" in b2.transName:
+    if b2.isReversed and b2.transName and "three" in b2.transName:
         return -1
     return 0
 
@@ -51,11 +51,17 @@ class Bus:
     def InitializeBranches(self):
         for node in glob.adjDict[self.cnID]:
             if "BUS" not in node:
-                b = Branch(node, [self.cnID], self.canvas, self)
+                b = Branch(node, [self.cnID], self.canvas, self, self.direction)
+                if b.direction != self.direction:
+                    b.isReversed = True
                 if b.isReversed:
                     self.reversedBranches.append(b)
                 else:
                     self.branches.append(b)
+
+        if self.is32:
+            self.branches += self.reversedBranches
+            self.reversedBranches = []
         self.branches.sort(cmp=branchCMP)
         self.reversedBranches.sort(cmp=transformerBranchCMP)
 
@@ -78,7 +84,7 @@ class Bus:
         if self.cnID in glob.VerticalBusPair and self.cnID < glob.VerticalBusPair[self.cnID]:
             xStart -= 30
         for n in layout_branches:
-            n.SetLayout(xStart, self.y, direction)
+            n.SetLayout(xStart, self.y)
             xStart += gap
         if len(not_layout_branches) > 2:
             raise ValueError("I do not know how to draw this")
@@ -89,9 +95,9 @@ class Bus:
             tmpdir = reverseDirect(tmpdir)
             if self.reversC:
                 tmpdir = reverseDirect(tmpdir)
-            n.SetLayout(self.x+self.length/2-15*ct, self.y, tmpdir)
+            n.SetLayout(self.x+self.length/2-15*ct, self.y)
+            n.direction = tmpdir
             ct+=1
-
 
 
     def getDimension(self):

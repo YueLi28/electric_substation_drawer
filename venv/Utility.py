@@ -41,3 +41,9 @@ def cleanElement(element):
     if elementName == "unit":
         elementName = "generator"
     return elementName
+
+def findTransformerObj(transName):
+    transID = transName.split("#")[1].split(".")[0]
+    if transID in glob.AllTrans:
+        return glob.AllTrans[transID]
+    return None
