@@ -49,7 +49,7 @@ class Canvas:
         self.drawLine(eX, y, eX - complement, y, color)
 
     def generateName(self):
-        namej = {"c":"ht.Text", "i":1, "p": {"name":"文字", "layer":1, "position":{"x":-800, "y":-800}},
+        namej = {"c":"ht.Text", "i":1, "p": {"name":"文字", "layer":1, "position":{"x":0, "y":-1000}},
                  "s":{"label":"", "text.color":"rgb(255,0,0)", "text.font": "32px arial, sans-serif"}}
         namej["s"]["text"] = self.name
 
@@ -96,12 +96,12 @@ class Canvas:
                 #x = transLoc[0]
                 components = components[:-1]
                 portX, portY = tran.getCorrectPort(x,y)
-                if portY == tran.y:
+                if portY == tran.y: #3 port transformer going right
                     self.drawLine(portX, portY, x, portY, glob.voltMap[components[-1]])
                     portX = x
                 else:
-                    pass
-                    #x = portX
+                    if glob.PortWithinBus(portX, transName):
+                        x = portX
             else:
                 defineTrans = True
 
@@ -149,7 +149,9 @@ class Canvas:
         if defineTrans:
             self.DefineTransformerLoc(transName, x, y, direction,self)
         elif hasTrans:
-            self.drawLine(x, y, portX, portY, volt)
+            if x != portX:
+                self.drawLine(x, y, portX, y, volt)
+            self.drawLine(portX, y, portX, portY, volt)
         return y
 
     def drawLine(self, startX, startY, endX, endY, color, borderWidth=2):

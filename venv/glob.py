@@ -95,5 +95,37 @@ def fillRelation(adj, BusCNs):
     adjDict = adj
     BusCNID = BusCNs
 
+def PortWithinBus(x, node):
+    attachedBus = findAttachedBus(node)
+    if len(attachedBus) >= 1:
+        busSk = BusDict[attachedBus[0]]
+        if busSk.x - busSk.w/2 < x < busSk.x + busSk.w/2:
+            return True
+    return False
+
+
+    #print bus.x, bus.w
+
+def findAttachedBus(node):
+    future = adjDict[node][:]
+    visited = [node]
+    res = []
+    while future:
+        tmp = future.pop()
+        if tmp in visited:
+            continue
+        visited.append(tmp)
+        if "transformer" not in tmp:
+            future.extend(adjDict[tmp])
+        if tmp in BusCNID:
+            res.append(tmp)
+    return res
+
+
+
+
+
+
+
 
 visitedBusCN = set()

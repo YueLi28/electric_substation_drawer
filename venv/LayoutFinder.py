@@ -31,7 +31,6 @@ class LayoutFinder:
                     else:
                         if e.y < self.y:
                             fixedT.append([b, e])
-
         return fixedT
 
     def find1newX(self, buses):
@@ -56,6 +55,8 @@ class LayoutFinder:
             self.buses = sortedBus + tails
             self.x = sum([e.x for e in sortedPos])/(len(sortedPos))
 
+    #def sortBuses(self):
+
 
     def findLayout(self):
         if len(self.buses) == 1:
@@ -66,6 +67,7 @@ class LayoutFinder:
             self.find2newX(self.buses)
             return self.determineLayout2()
         elif len(self.buses) == 3:
+            self.find2newX(self.buses)
             return self.determineLayout3()
         else:
             return self.determineLayout4()

@@ -33,7 +33,11 @@ class Branch:
         tails = findTail(node, fromNode)
         if len(tails) > 1:
             self.isSingle = False
+        shouldReverse = False
         for t in tails:
+            if node == "Disconnector#2091":
+                print t, tails
+                print tails, glob.VerticalBusPair[self.parent.cnID],t[-1]== glob.VerticalBusPair[self.parent.cnID]
             if self.parent.cnID in glob.VerticalBusPair and t[-1] == glob.VerticalBusPair[self.parent.cnID]:
                 self.isPaired = True
             if self.parent.cnID in glob.HorizontalBusPair and t[-1] == glob.HorizontalBusPair[self.parent.cnID]:
@@ -51,16 +55,18 @@ class Branch:
                 elif "two" in t[-1]:
                     otherport = [x for x in glob.adjDict[t[-1]] if "transformer" in x][0]
                     if transformer.Transformer2port.BusConnected(otherport, t[-1]):# Connected to another bus
-                        self.direction = reverseDirect(self.direction)
+                        shouldReverse = True
                     else:
                         if transformer.Transformer2port.hasGenerator(otherport, t[-1]):
                             self.direction = "down"
                 else:
-                    self.direction = reverseDirect(self.direction)
+                    shouldReverse = True
             if "unit" in t[-1]:
                 self.hasGen = True
         if not self.transName and self.hasGen:
             self.direction = "down"
+        elif shouldReverse:
+            self.direction = reverseDirect(self.direction)
 
 
 
@@ -112,6 +118,7 @@ class Branch:
                             self.canvas.drawTail(2*newX - self.x, newY, bridge[len(bridge) / 2 + 1], bridge, self.direction)
                         else:
                             self.canvas.drawTail(newX, newY, bridge[len(bridge)/2], bridge, self.direction)
+
                     break
                 if (len(i) - 18)% 6==  0 :
                     self.draw500Branch(self.x, self.y, i, "up")

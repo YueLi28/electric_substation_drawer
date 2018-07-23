@@ -104,12 +104,14 @@ class drawer():
         # # print Layout
         # return
         #print LayoutFinder(self.adjDict, buses, self.busCN, x, y).findConnectedBranch()
-
         layout = LayoutFinder(self.adjDict, buses, self.busCN, x, y, dir)
         Bs = layout.findLayout()
         for b in Bs:
             bs = glob.BusDict[b]
             self.drawSingleBus(bs.id, bs.x, bs.y, layout.dir, bs.w, canv)
+            #rightedge = max(bs.x + bs.w/2, rightedge)
+            #leftedge = min(bs.x - bs.w/2, rightedge)
+        #print leftedge, rightedge
 
     def drawSingleBus(self, bus, x, y, dir, busLen, canv):
         b = Bus(x, y, busLen, bus, dir, canv)
@@ -123,7 +125,6 @@ class drawer():
         bus1.draw()
 
         bus2.draw()
-
 
     def drawHorizontalBusPair(self, buses, x, y, dir, len, canv):
         bus1, bus2 = buses
@@ -144,8 +145,8 @@ class drawer():
         kset = list(self.VoltBUSDict.keys())
         kset.sort()
         lowVolt, midVolt, highVolt = kset
-        self.drawBuses(self.VoltBUSDict[highVolt], -600, -800, "up", canv)
-        self.drawBuses(self.VoltBUSDict[midVolt], 1400, -800, "up", canv)
+        self.drawBuses(self.VoltBUSDict[highVolt], -800, -800, "up", canv)
+        self.drawBuses(self.VoltBUSDict[midVolt], 1000, -800, "up", canv)
         self.drawBuses(self.VoltBUSDict[lowVolt], -600, 0, "down", canv)
 
     def draw4Section(self, canv):
@@ -247,7 +248,7 @@ class tester:
 import operator
 
 isTest = False
-inp = 22753
+inp = 17439
 #k = tester()
 #25745: Vertical bus pair
 #25559: Single bus with segmentation and side bus
@@ -257,7 +258,7 @@ inp = 22753
 #25322: connected ACLine
 #5372: 10V and 220V
 if isTest:
-    testCases = [25745, 25559, 4909, 25613, 25920, 25322, 5372, 2578]
+    testCases = [25745, 25559, 4909, 25613, 25920, 25322, 5372, 2578, 20465]
     for i in testCases:
         #print i
         k = drawer(i)
