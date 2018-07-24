@@ -106,7 +106,7 @@ class Bus:
     def draw(self):
         self.InitializeBranches()
         self.generateLayouts()
-        self.canvas.drawLine(self.x - self.length / 2 , self.y, self.x + self.length / 2 , self.y, glob.voltMap[self.cnID], 3.5)
+        self.canvas.drawLine(self.x - self.length / 2 , self.y, self.x + self.length / 2 , self.y, glob.voltMap[self.cnID], 12)
         for each in self.branches:
             each.draw()
         for each in self.reversedBranches:

@@ -2,6 +2,8 @@ from dataModel import *
 from LayoutFinder import *
 from Utility import *
 import glob
+import os
+import pickle
 # x = Canvas()
 
 # x.drawBus(0,0,800,[["Disconnector", "Breaker", "Disconnector","singlearrow"]]*1, "down")
@@ -12,24 +14,26 @@ import glob
 
 import urllib, json
 import collections
+workingdir = "/tmp/offlineData/"
 
 class drawer():
-
-
-
-
-
     def __init__(self, stationID):
         self.colorHead = {}
         glob.reset()
         self.ID = stationID
-        url = "http://192.168.2.26:9000/query/TwoOptionsID?TopoID="+str(stationID)
-        response = urllib.urlopen(url)
-        data = json.loads(response.read())
-        self.name =  data["results"][0]["topo_equal"][0]["attributes"]["Sub"]
-        self.subID = data["results"][0]["topo_equal"][0]["attributes"]["subid"]
-        print self.name, stationID, "->", self.subID
-        datasets = data["results"][1]["@@setedge"]
+        fname = workingdir + str(stationID)
+        if os.path.isfile(fname):
+            with open(fname,'rb') as f:
+                data = pickle.load(f)
+        else:
+            url = "http://192.168.2.5:9000/query/TwoOptionsID?TopoID="+str(stationID)
+            response = urllib.urlopen(url)
+            data = json.loads(response.read())
+            with open(fname, 'wb') as f:
+                pickle.dump(data, f)
+
+
+        datasets = data["results"][0]["@@setedge"]
 
         self.adjDict = collections.defaultdict(set)
         for points in datasets:
@@ -44,7 +48,7 @@ class drawer():
 
         self.busCN = set()
         self.VoltBUSDict = collections.defaultdict(set)
-        for each in data["results"][2]["vertexSet"]:
+        for each in data["results"][1]["vertexSet"]:
             if each["v_type"] == "BUS":
                 busID = "BUS#" + each["v_id"]
                 bCN = self.adjDict[busID][0]
@@ -58,9 +62,9 @@ class drawer():
             if "transformer" in each["v_type"]:
                 self.colorHead[each["v_type"]+"#"+each["v_id"]]=each["attributes"]["volt"]
             if "BUS" in each["v_type"]:
+                self.name = each["attributes"]["name"].split("/")[0]
                 self.colorHead[each["v_type"] + "#" + each["v_id"]] = each["attributes"]["volt"]
             glob.infoMap[each["v_type"] + "#" + each["v_id"]] = each['attributes']
-
 
         glob.fillRelation(self.adjDict, self.busCN)
         self.coloring()
@@ -91,14 +95,14 @@ class drawer():
 
     def isVisited(self):
         if len(glob.visitedBusCN) == len(glob.visitedBusCN.union(self.busCN)):
-            print "visited"
             return True
         glob.visitedBusCN = glob.visitedBusCN.union(self.busCN)
         #print len(glob.visitedBusCN)
         return False
 
-    def drawBuses(self, buses, x, y, dir, canv):
+    def drawBuses(self, buses, x, y, dir, canv, startingP = None):
         buses = list(buses)
+        rightedge, leftedge = -float('inf'), float('inf')
         # LayoutFinder(self.adjDict, buses, self.busCN, x, y).findConnectedBranch()
         # # Layout = LayoutFinder(self.adjDict, buses, self.busCN, x, y).determineLayout()
         # # print Layout
@@ -108,10 +112,20 @@ class drawer():
         Bs = layout.findLayout()
         for b in Bs:
             bs = glob.BusDict[b]
+            rightedge = max(bs.x + bs.w/2, rightedge)
+            leftedge = min(bs.x - bs.w/2, leftedge)
+        if startingP == None:
+            Offset = 0
+        else:
+            Offset = startingP + 100 - leftedge
+        for b in Bs:
+            bs = glob.BusDict[b]
+            bs.x += Offset
+
+        for b in Bs:#must draw after all reposition is done
+            bs = glob.BusDict[b]
             self.drawSingleBus(bs.id, bs.x, bs.y, layout.dir, bs.w, canv)
-            #rightedge = max(bs.x + bs.w/2, rightedge)
-            #leftedge = min(bs.x - bs.w/2, rightedge)
-        #print leftedge, rightedge
+        return rightedge+Offset
 
     def drawSingleBus(self, bus, x, y, dir, busLen, canv):
         b = Bus(x, y, busLen, bus, dir, canv)
@@ -145,9 +159,9 @@ class drawer():
         kset = list(self.VoltBUSDict.keys())
         kset.sort()
         lowVolt, midVolt, highVolt = kset
-        self.drawBuses(self.VoltBUSDict[highVolt], -800, -800, "up", canv)
-        self.drawBuses(self.VoltBUSDict[midVolt], 1000, -800, "up", canv)
-        self.drawBuses(self.VoltBUSDict[lowVolt], -600, 0, "down", canv)
+        re = self.drawBuses(self.VoltBUSDict[highVolt], -800, -800, "up", canv)
+        self.drawBuses(self.VoltBUSDict[midVolt], 1000, -800, "up", canv, re)
+        self.drawBuses(self.VoltBUSDict[lowVolt], -800, 0, "down", canv)
 
     def draw4Section(self, canv):
         kset = list(self.VoltBUSDict.keys())
@@ -159,6 +173,7 @@ class drawer():
         self.drawBuses(self.VoltBUSDict[lowVolt], 600, 0, "down", canv)
 
     def newdraw(self, isTest):
+        print self.name, "<-", self.ID
         x = Canvas(self.name)
         if len (self.VoltBUSDict) == 1:
             vt = list(self.VoltBUSDict.keys())[0]
@@ -227,8 +242,8 @@ class tester:
     def __init__(self):
         ct = collections.Counter()
         count = 0
-        with open("/tmp/test4.csv","r") as f:
-            ids = [x.strip() for x in f.readlines() if int(x)>0]
+        with open("/tmp/sum.csv","r") as f:
+            ids = [x.strip().split(',')[0] for x in f.readlines()]
             for id in ids:
                 #if id ==
                 try:
@@ -248,7 +263,7 @@ class tester:
 import operator
 
 isTest = False
-inp = 17439
+inp = 17285
 #k = tester()
 #25745: Vertical bus pair
 #25559: Single bus with segmentation and side bus

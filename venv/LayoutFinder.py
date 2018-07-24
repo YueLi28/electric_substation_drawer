@@ -165,14 +165,16 @@ class LayoutFinder:
                     sY = 400
                 if tmp[1] > tmp[2]:#vertical pair
                     glob.AddVerticalBusPair(b1, b2)
-                    glob.placeBus(b1, self.x, self.y - 25, 1000, self.dir)
-                    glob.placeBus(b2, self.x, self.y + 25, 1000, self.dir)
-                    glob.placeBus(s, self.x, self.y + sY, 1000, self.dir)
+                    width = self.getEstimatedLength(b1)
+                    glob.placeBus(b1, self.x, self.y - 25, width, self.dir)
+                    glob.placeBus(b2, self.x, self.y + 25, width, self.dir)
+                    glob.placeBus(s, self.x, self.y + sY, width, self.dir)
                 else:
                     glob.AddHorizontalBusPair(b1, b2)
-                    glob.placeBus(b1, self.x - 500 - 50, self.y, 1000, self.dir)
-                    glob.placeBus(b2, self.x + 500 + 50, self.y, 1000, self.dir)
-                    glob.placeBus(s, self.x, self.y + sY, 2100, self.dir)
+                    w1,w2 = self.getEstimatedLength(b1),self.getEstimatedLength(b2)
+                    glob.placeBus(b1, self.x - w1/2 - 50, self.y, w1, self.dir)
+                    glob.placeBus(b2, self.x + w2/2 + 50, self.y, w2, self.dir)
+                    glob.placeBus(s, self.x, self.y + sY, w1+w2+100, self.dir)
                 return [b1, b2, s]
         else:
             maxCN, maxB = None, 0
