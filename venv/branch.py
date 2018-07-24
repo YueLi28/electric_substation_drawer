@@ -137,8 +137,8 @@ class Branch:
     def draw500Branch(self, x, y, eles, dir):
         color = glob.voltMap[eles[0]]
         newY = y
-        dirOffset = 40
-        reversedDirOffset = 60
+        leftOffset = rightOffset = 50
+        turn = True
         otherBusY = glob.BusDict[eles[-1]].y
         for i in range(0, len(eles)+1-6, 6):
             seg = eles[i:i+6]
@@ -148,14 +148,20 @@ class Branch:
                 tails = findTail(seghead, eles)
                 if len(tails) > 0:
                     tailLength = SizeEstimator.estimateWidth(seghead, eles)
+                    if turn:#branch to left
+                        if i != 0:  # first turn, no need to offset
+                            leftOffset += tailLength
+                        tmpOffset = -leftOffset
+                    else:
+                        tmpOffset = rightOffset
+                        rightOffset += tailLength
+                    turn = not turn
                     if self.find500BranchDirReversed(tails):
-                        tgtX, tgtY = self.x + reversedDirOffset, self.y
-                        reversedDirOffset+=40+tailLength
+                        tgtX, tgtY = self.x + tmpOffset, self.y+40
                         newDir = "down"
                     else:
-                        tgtX, tgtY = self.x + dirOffset, otherBusY
+                        tgtX, tgtY = self.x + tmpOffset, otherBusY-40
                         newDir = "up"
-                        dirOffset += 40 +tailLength
                     self.canvas.drawLine(x, newY, tgtX, newY, color)
                     self.canvas.drawLine(tgtX, newY, tgtX, tgtY, color)
                     self.canvas.drawTail(tgtX, tgtY, seghead, eles, newDir)

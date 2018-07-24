@@ -130,9 +130,18 @@ class LayoutFinder:
 
 
     def determineLayout2(self):
+        def hasDirectionTransformer(myBus):
+            branchHeads = [x for x in glob.adjDict[myBus] if "BUS" not in x]
+            for h in branchHeads:
+                t = Utility.findTail(h, [myBus])
+                if len(t) == 1 and "transformer" in t[0][-1]:
+                    return True
+            return False
         b1, b2 = self.buses
         busD = self.checkStat(b1)[0]
         if self.is32:
+            if hasDirectionTransformer(b2):
+                b1, b2 = b2, b1
             glob.AddVerticalBusPair(b1, b2)
             glob.placeBus(b1, self.x, self.y + 250 + 100*self.offset32, 1500, self.dir)
             glob.placeBus(b2, self.x, self.y - 250 - 100*self.offset32, 1500, self.dir)

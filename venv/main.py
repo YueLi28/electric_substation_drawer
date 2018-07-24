@@ -263,7 +263,7 @@ class tester:
 import operator
 
 isTest = False
-inp = 17285
+inp = 18145
 #k = tester()
 #25745: Vertical bus pair
 #25559: Single bus with segmentation and side bus
