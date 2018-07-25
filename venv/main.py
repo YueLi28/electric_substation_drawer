@@ -6,7 +6,10 @@ from Utility import *
 import glob
 import os
 import pickle
-import urllib
+import sys
+import urllib, json
+import collections
+
 
 # x = Canvas()
 
@@ -27,8 +30,6 @@ def iriToUri(iri):
     )
 
 
-import urllib, json
-import collections
 workingdir = u"/tmp/offlineData/"
 
 class drawer():
@@ -37,15 +38,9 @@ class drawer():
         glob.reset()
         self.name = name
         fname = workingdir + name
-        if os.path.isfile(fname):
-            with open(fname,'rb') as f:
-                data = pickle.load(f)
-        else:
-            url = u"http://192.168.2.5:9000/query/TwoOptionsNAME?SubstationNAME="+name
-            response = urllib.urlopen(iriToUri(url))
-            data = json.loads(response.read())
-            with open(fname, 'wb') as f:
-                pickle.dump(data, f)
+        url = u"http://192.168.2.5:9000/query/TwoOptionsNAME?SubstationNAME="+name
+        response = urllib.urlopen(iriToUri(url))
+        data = json.loads(response.read())
 
         datasets = data["results"][0]["@@setedge"]
 
@@ -209,7 +204,7 @@ class drawer():
         #self.drawHorizontalBusPair(x)
         #self.drawVerticalBusPair(x)
         if isTest:
-            x.printToFile(u"/tmp/stationDraw/"+self.name+u".js")
+            x.printToFile(u"/tmp/EMSoutput/"+self.name+u".json")
         else:
             x.printToFile()
 
@@ -280,31 +275,21 @@ class tester:
                     print "\tCANNOT DRAW: ", err
 
 
-import operator
 
-isTest = False
 
-inp = "西南.普提"
-inp = unicode(inp, "utf-8")
-#k = tester()
-#25745: Vertical bus pair
-#25559: Single bus with segmentation and side bus
-#4909:  Vertical bus pair with side bus
-#25613: Vertical bus pair with side bus (with Transformer connected to the side bus
-#25920: Bus Pair with segmentation
-#25322: connected ACLine
-#5372: 10V and 220V
-if isTest:
-    testCases = [25745, 25559, 4909, 25613, 25920, 25322, 5372, 2578, 20465]
-    for i in testCases:
-        #print i
-        k = drawer(i)
-        k.newdraw(False)
-else:
+def main(inp):
     k = drawer(inp)
-    k.newdraw(False)
+    k.newdraw(True)
 
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print "Wrong argument number"
+        exit(-1)
+    else:
+        name = sys.argv[1]
+        name = unicode(name, "utf-8")
+        main(name)
 
 print "Done"
-
-
+sys.stdout.flush()

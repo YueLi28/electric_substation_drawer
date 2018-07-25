@@ -73,14 +73,9 @@ class Canvas:
         else:
             glob.AllTrans[transID] = Transformer2port(transName, x,y,direction, can, glob.adjDict)
 
-    def printToFile(self, fname="/home/liyue/jichengnnegyuanhinhightopozhongruinew/demo/2deditor/Test_new.js"):
-        if "Test_new" not in fname:
-            toJson = True
-            fname = fname.replace(".js",".json")
-        else:
-            toJson = False
+    def printToFile(self, fname="/tmp/EMSoutput/Test_new.json"):
         with open(fname, "w") as f:
-            f.write(self.toString(toJson))
+            f.write(self.toString())
 
     def drawBranch(self, x, y, hLen, components, direction):
         if len(components) == 0:
@@ -161,11 +156,8 @@ class Canvas:
     def __str__(self):
         return "var datamodel_config = " + json.dumps(self.canvas, indent=2)
 
-    def toString(self, toJson):
-        if toJson:
-            return json.dumps(self.canvas, indent=2)
-        else:
-            return "var datamodel_config = " + json.dumps(self.canvas, indent=2)
+    def toString(self):
+        return json.dumps(self.canvas, indent=2)
 
 
     def printContent(self):
