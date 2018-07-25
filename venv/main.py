@@ -1,37 +1,51 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 from dataModel import *
 from LayoutFinder import *
 from Utility import *
 import glob
 import os
 import pickle
+import urllib
+
 # x = Canvas()
 
 # x.drawBus(0,0,800,[["Disconnector", "Breaker", "Disconnector","singlearrow"]]*1, "down")
 # x.printToFile(None)
 
 
+import re, urlparse
+
+def urlEncodeNonAscii(b):
+    return re.sub('[\x80-\xFF]', lambda c: '%%%02x' % ord(c.group(0)), b)
+
+def iriToUri(iri):
+    parts= urlparse.urlparse(iri)
+    return urlparse.urlunparse(
+        part.encode('idna') if parti==1 else urlEncodeNonAscii(part.encode('utf-8'))
+        for parti, part in enumerate(parts)
+    )
 
 
 import urllib, json
 import collections
-workingdir = "/tmp/offlineData/"
+workingdir = u"/tmp/offlineData/"
 
 class drawer():
-    def __init__(self, stationID):
+    def __init__(self, name):
         self.colorHead = {}
         glob.reset()
-        self.ID = stationID
-        fname = workingdir + str(stationID)
+        self.name = name
+        fname = workingdir + name
         if os.path.isfile(fname):
             with open(fname,'rb') as f:
                 data = pickle.load(f)
         else:
-            url = "http://192.168.2.5:9000/query/TwoOptionsID?TopoID="+str(stationID)
-            response = urllib.urlopen(url)
+            url = u"http://192.168.2.5:9000/query/TwoOptionsNAME?SubstationNAME="+name
+            response = urllib.urlopen(iriToUri(url))
             data = json.loads(response.read())
             with open(fname, 'wb') as f:
                 pickle.dump(data, f)
-
 
         datasets = data["results"][0]["@@setedge"]
 
@@ -94,6 +108,8 @@ class drawer():
 
 
     def isVisited(self):
+
+
         if len(glob.visitedBusCN) == len(glob.visitedBusCN.union(self.busCN)):
             return True
         glob.visitedBusCN = glob.visitedBusCN.union(self.busCN)
@@ -121,7 +137,6 @@ class drawer():
         for b in Bs:
             bs = glob.BusDict[b]
             bs.x += Offset
-
         for b in Bs:#must draw after all reposition is done
             bs = glob.BusDict[b]
             self.drawSingleBus(bs.id, bs.x, bs.y, layout.dir, bs.w, canv)
@@ -173,7 +188,6 @@ class drawer():
         self.drawBuses(self.VoltBUSDict[lowVolt], 600, 0, "down", canv)
 
     def newdraw(self, isTest):
-        print self.name, "<-", self.ID
         x = Canvas(self.name)
         if len (self.VoltBUSDict) == 1:
             vt = list(self.VoltBUSDict.keys())[0]
@@ -184,8 +198,10 @@ class drawer():
             self.draw3Section(x)
         elif len(self.VoltBUSDict) == 4:
             self.draw4Section(x)
+        elif len (self.VoltBUSDict) == 0:
+            raise ValueError("No connected bus!")
         else:
-            raise ValueError("unknown type")
+            raise ValueError("Unknown type")
         for t in glob.AllTrans:
             glob.AllTrans[t].drawTails()
 
@@ -242,28 +258,34 @@ class tester:
     def __init__(self):
         ct = collections.Counter()
         count = 0
-        with open("/tmp/sum.csv","r") as f:
-            ids = [x.strip().split(',')[0] for x in f.readlines()]
-            for id in ids:
-                #if id ==
+        with open("/tmp/Substation.csv","r") as f:
+            ids = [x.strip().split(',')[1] for x in f.readlines()]
+            names = list((set(ids)))
+            print len(names)
+            for name in names:
+                name = unicode(name, "utf-8")
                 try:
-                    x = drawer(id)
-                except:
-                    print "EMPTY: ", id
+                    x = drawer(name)
+                except Exception, err:
+                    print "ERROR!", err
                     continue
                 count+=1
                 if x.isVisited():
+                    print "VISITED: ", name
                     continue
                 try:
-                    print id, [[e, len(x.VoltBUSDict[e])] for e in x.VoltBUSDict]
+                    print name, [[e, len(x.VoltBUSDict[e])] for e in x.VoltBUSDict]
                     x.newdraw(True)
                 except Exception, err:
-                    print "\tCANNOT DRAW: ", id
+                    print "\tCANNOT DRAW: ", err
+
 
 import operator
 
 isTest = False
-inp = 18145
+
+inp = "西南.普提"
+inp = unicode(inp, "utf-8")
 #k = tester()
 #25745: Vertical bus pair
 #25559: Single bus with segmentation and side bus

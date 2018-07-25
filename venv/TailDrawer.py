@@ -63,6 +63,7 @@ class TailDrawer:
             #print paths
             onlyPaths = [i[0] for i in paths]
             direct,right = self.findDirectTail(onlyPaths)
+            print direct, right
             for p in direct:
                 self.newDraw(p[0], [node], x, y, dir)
                 offset = SizeEstimator.estimateWidth(p[0], [node])

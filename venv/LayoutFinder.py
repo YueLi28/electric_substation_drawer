@@ -118,7 +118,7 @@ class LayoutFinder:
             b1, b2 = cn, tmp[0]
         b3, b4 = glob.VerticalBusPair[b1],glob.VerticalBusPair[b2]
 
-        w1,w2 = self.getEstimatedLength(b1), self.getEstimatedLength(b2)
+        w1,w2 = max(self.getEstimatedLength(b1),self.getEstimatedLength(b3)), max(self.getEstimatedLength(b2),self.getEstimatedLength(b4))
         glob.placeBus(b1, self.x - w1 / 2 - 50, self.y, w1, self.dir)
         glob.placeBus(b2, self.x + w2 / 2 + 50, self.y, w2, self.dir)
         glob.placeBus(b3, self.x - w1 / 2 - 50, self.y+50, w1, self.dir)
@@ -174,7 +174,7 @@ class LayoutFinder:
                     sY = 400
                 if tmp[1] > tmp[2]:#vertical pair
                     glob.AddVerticalBusPair(b1, b2)
-                    width = self.getEstimatedLength(b1)
+                    width = max(self.getEstimatedLength(b1), self.getEstimatedLength(b2))
                     glob.placeBus(b1, self.x, self.y - 25, width, self.dir)
                     glob.placeBus(b2, self.x, self.y + 25, width, self.dir)
                     glob.placeBus(s, self.x, self.y + sY, width, self.dir)
@@ -194,20 +194,24 @@ class LayoutFinder:
                     maxB = bStat[1]
             if maxCN == None:#3 bus horizontally aligned
                 b1, b2, b3 = self.buses
+                w1, w2, w3 = self.getEstimatedLength(b1), self.getEstimatedLength(b2), self.getEstimatedLength(b3)
                 glob.AddHorizontalBusPair(b1, b2)
                 glob.AddHorizontalBusPair(b2, b3)
-                glob.placeBus(b1, self.x - 600 - 50, self.y, 600, self.dir)
-                glob.placeBus(b2, self.x, self.y, 600, self.dir)
-                glob.placeBus(b3, self.x + 600 + 50, self.y, 600, self.dir)
+                print w1, w2, w3
+                totalL = (w1+w2+w3+200)
+                glob.placeBus(b1, self.x - totalL/2 + w1/2, self.y, w1, self.dir)
+                glob.placeBus(b2, self.x -totalL/2 + w1+100+w2/2, self.y, w2, self.dir)
+                glob.placeBus(b3, self.x + totalL/2 - w3/2, self.y, w3, self.dir)
                 return self.buses
             else: #maxCN is the long bus vertically aligned with the other 2
                 b1, b2 = [x for x in self.buses if x != maxCN]
+                w1, w2 = self.getEstimatedLength(b1), self.getEstimatedLength(b2)
                 glob.AddVerticalBusPair(b1, maxCN)
                 glob.AddVerticalBusPair(b2, maxCN)
                 glob.AddHorizontalBusPair(b1, b2)
-                glob.placeBus(maxCN, self.x, self.y - 25, 2100, self.dir)
-                glob.placeBus(b1, self.x - 500 - 50, self.y + 25, 1000, self.dir)
-                glob.placeBus(b2, self.x + 500 + 50, self.y + 25, 1000, self.dir)
+                glob.placeBus(maxCN, self.x + (w2-w1)/2, self.y - 25, w1+w2+100, self.dir)
+                glob.placeBus(b1, self.x - w1/2 - 50, self.y + 25, w1, self.dir)
+                glob.placeBus(b2, self.x + w2/2 + 50, self.y + 25, w2, self.dir)
                 return [b1, b2, maxCN]
 
 

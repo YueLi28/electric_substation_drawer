@@ -150,11 +150,11 @@ class Branch:
                     tailLength = SizeEstimator.estimateWidth(seghead, eles)
                     if turn:#branch to left
                         if i != 0:  # first turn, no need to offset
-                            leftOffset += tailLength
+                            leftOffset += tailLength+40
                         tmpOffset = -leftOffset
                     else:
                         tmpOffset = rightOffset
-                        rightOffset += tailLength
+                        rightOffset += tailLength+40
                     turn = not turn
                     if self.find500BranchDirReversed(tails):
                         tgtX, tgtY = self.x + tmpOffset, self.y+40
@@ -165,6 +165,7 @@ class Branch:
                     self.canvas.drawLine(x, newY, tgtX, newY, color)
                     self.canvas.drawLine(tgtX, newY, tgtX, tgtY, color)
                     self.canvas.drawTail(tgtX, tgtY, seghead, eles, newDir)
+
             else:
                 self.canvas.drawLine(x, newY, x, otherBusY, color)
 
