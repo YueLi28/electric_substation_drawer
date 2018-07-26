@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 from dataModel import *
 from LayoutFinder import *
-from Utility import *
 import glob
 import os
 import pickle
@@ -76,13 +75,19 @@ class drawer():
             if "transformer" in each["v_type"]:
                 self.colorHead[each["v_type"]+"#"+each["v_id"]]=each["attributes"]["volt"]
             if "BUS" in each["v_type"]:
-                self.name = each["attributes"]["name"].split("/")[0]
                 self.colorHead[each["v_type"] + "#" + each["v_id"]] = each["attributes"]["volt"]
             glob.infoMap[each["v_type"] + "#" + each["v_id"]] = each['attributes']
 
         glob.fillRelation(self.adjDict, self.busCN)
         self.coloring()
 
+        # tmp = [x.split(".")[0] for x in glob.adjDict.keys() if "Breaker" in x or "Disconnector" in x or "transformer" in x]
+        # for e in tmp:
+        #     if e in glob.voltMap or "transformer" in e:
+        #         if "transformer" in e:
+        #             print e
+        #         else:
+        #             print e, "\t", glob.voltMap[e]
 
     def tainting(self, h, color):
         glob.voltMap[h] = color
@@ -284,7 +289,7 @@ import operator
 
 isTest = False
 
-inp = "西南.普提"
+inp = "四川.亭子口厂"
 inp = unicode(inp, "utf-8")
 #k = tester()
 #25745: Vertical bus pair

@@ -25,6 +25,7 @@ class TailDrawer:
             node, fromNodes = future[0], [node]
             future = [x for x in glob.adjDict[node] if x not in  fromNodes]
         res += [node]
+        print node
         if node in glob.BusCNID:
             isEnd = True
         else:
@@ -60,10 +61,8 @@ class TailDrawer:
                 self.canvas.drawLine(x,newY,x,tgtY,volt)
         else:
             paths = [self.findSinglePath(i, [node]) for i in neighbors]
-            #print paths
             onlyPaths = [i[0] for i in paths]
             direct,right = self.findDirectTail(onlyPaths)
-            print direct, right
             for p in direct:
                 self.newDraw(p[0], [node], x, y, dir)
                 offset = SizeEstimator.estimateWidth(p[0], [node])

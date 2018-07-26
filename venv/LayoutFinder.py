@@ -51,9 +51,12 @@ class LayoutFinder:
             sortedPos = [x[1] for x in fixedT]
             self.y = sortedPos[0].y + glob.globOffset
             glob.globOffset += 200
+            seen = set()
+            seen_add = seen.add
             tails = [x for x in buses if x not in sortedBus]
-            self.buses = sortedBus + tails
-            self.x = sum([e.x for e in sortedPos])/(len(sortedPos))
+
+            self.buses = [x for x in sortedBus if not (x in seen or seen_add(x))] + tails
+            self.x = sum([e.x for e in sortedPos])/(len(set(sortedPos))) + sum([self.getEstimatedLength(x) for x in tails])/2 + 50
 
     #def sortBuses(self):
 
@@ -137,6 +140,7 @@ class LayoutFinder:
                 if len(t) == 1 and "transformer" in t[0][-1]:
                     return True
             return False
+        print self.buses
         b1, b2 = self.buses
         busD = self.checkStat(b1)[0]
         if self.is32:

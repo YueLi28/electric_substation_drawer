@@ -211,7 +211,6 @@ class Node:
         self.representation = {}
         self.initRepresentation()
 
-
     def initRepresentation(self):
         self.representation["c"] = "ht.Node"
         self.representation["i"] = 1  # not sure the usage
@@ -236,8 +235,6 @@ class Node:
                 p1, p2 = p2, p1
             self.representation["a"]["lineColor2"] = glob.getVoltRGB(glob.voltMap[p1])
             self.representation["a"]["lineColor3"] = glob.getVoltRGB(glob.voltMap[p2])
-
-
 
         if self.name != "CN":
             self.representation["p"]["image"] = "symbols/electricity/%s.json" % self.name
