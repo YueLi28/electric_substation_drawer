@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import urllib, json
 import collections
 import glob
@@ -141,6 +143,32 @@ class LayoutFinder:
 
 
 
+
+    def findSideBus(self):
+        res = []
+        for b in self.buses:
+            bName = glob.infoMap[b]['name']
+            if u'旁路' in bName:
+                res.append(b)
+        if len(res) > 1:
+            raise ValueError("Found more than one side bus")
+        elif len(res) == 1:
+            return res[0]
+        else:
+            return None
+
+
+    def OnePlusSide(self, mBus, sideBus):
+        width = max(self.getEstimatedLength(mBus), self.getEstimatedLength(sideBus))
+        if self.dir == "up":
+            sY = -400
+        else:
+            sY = 400
+        glob.placeBus(sideBus, self.x, self.y + sY, width, self.dir)
+        glob.placeBus(mBus, self.x, self.y, width, self.dir)
+        return mBus, sideBus
+
+
     def determineLayout2(self):
         def hasDirectionTransformer(myBus):
             branchHeads = [x for x in glob.adjDict[myBus] if "BUS" not in x]
@@ -150,7 +178,13 @@ class LayoutFinder:
                     return True
             return False
         b1, b2 = self.buses
-        print b1, glob.infoMap
+        sideBus = self.findSideBus()
+        if sideBus is not None:
+            if b1 == sideBus:
+                otherBus = b2
+            else:
+                otherBus = b1
+            return self.OnePlusSide(otherBus, sideBus)
 
         busD = self.checkStat(b1)[0]
         if self.is32:
