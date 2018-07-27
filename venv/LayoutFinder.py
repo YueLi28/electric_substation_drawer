@@ -54,9 +54,14 @@ class LayoutFinder:
             seen = set()
             seen_add = seen.add
             tails = [x for x in buses if x not in sortedBus]
+            self.buses = [x for x in sortedBus if not (x in seen or seen_add(x))]
+            for i in range(len(tails)):
+                if i%2 == 1:
+                    self.buses +=  [tails[i]]
+                else:
+                    self.buses = [tails[i]] + self.buses
 
-            self.buses = [x for x in sortedBus if not (x in seen or seen_add(x))] + tails
-            self.x = sum([e.x for e in sortedPos])/(len(set(sortedPos))) + sum([self.getEstimatedLength(x) for x in tails])/2 + 50
+            self.x = sum([e.x for e in sortedPos]) / (len(set(sortedPos)))
 
     #def sortBuses(self):
 
@@ -72,8 +77,11 @@ class LayoutFinder:
         elif len(self.buses) == 3:
             self.find2newX(self.buses)
             return self.determineLayout3()
-        else:
+        elif len(self.buses) == 4:
             return self.determineLayout4()
+        else:
+            print "unknown pattern:", len(self.buses)
+            return []
 
 
 
@@ -101,6 +109,7 @@ class LayoutFinder:
                 if line[-1] in self.busCN:
                     if line[-1] != cn:
                         l = [x.split("#")[0] for x in line if "CN" not in x]
+
                         if len(l) == 3 or len(l)==1:
                             busConnector.append(line[-1])
                     else:
@@ -140,8 +149,9 @@ class LayoutFinder:
                 if len(t) == 1 and "transformer" in t[0][-1]:
                     return True
             return False
-        print self.buses
         b1, b2 = self.buses
+        print b1, glob.infoMap
+
         busD = self.checkStat(b1)[0]
         if self.is32:
             if hasDirectionTransformer(b2):
@@ -198,6 +208,7 @@ class LayoutFinder:
                     maxB = bStat[1]
             if maxCN == None:#3 bus horizontally aligned
                 b1, b2, b3 = self.buses
+                print b1, b2, b3
                 w1, w2, w3 = self.getEstimatedLength(b1), self.getEstimatedLength(b2), self.getEstimatedLength(b3)
                 glob.AddHorizontalBusPair(b1, b2)
                 glob.AddHorizontalBusPair(b2, b3)

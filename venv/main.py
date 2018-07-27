@@ -30,21 +30,25 @@ import urllib, json
 import collections
 workingdir = u"/tmp/offlineData/"
 
+useOfflineData = True
+
 class drawer():
     def __init__(self, name):
         self.colorHead = {}
         glob.reset()
         self.name = name
         fname = workingdir + name
-        if os.path.isfile(fname):
+        if os.path.isfile(fname) and useOfflineData:
             with open(fname,'rb') as f:
                 data = pickle.load(f)
         else:
+
             url = u"http://192.168.2.5:9000/query/TwoOptionsNAME?SubstationNAME="+name
             response = urllib.urlopen(iriToUri(url))
             data = json.loads(response.read())
-            with open(fname, 'wb') as f:
-                pickle.dump(data, f)
+            if "results" in data:
+                with open(fname, 'wb') as f:
+                    pickle.dump(data, f)
 
         datasets = data["results"][0]["@@setedge"]
 
@@ -289,7 +293,7 @@ import operator
 
 isTest = False
 
-inp = "四川.亭子口厂"
+inp = "四川.四板沟厂"
 inp = unicode(inp, "utf-8")
 #k = tester()
 #25745: Vertical bus pair

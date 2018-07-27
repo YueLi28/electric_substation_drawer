@@ -125,9 +125,19 @@ class Canvas:
 
         res = []
         #components = map(cleanElement, components)
-        for c in components:
+        for i,c in enumerate(components):
             if "CN" in c:
                 self.drawLine(x, y, x, y, 0)
+                if c not in glob.CNpos:
+                    glob.CNpos[c] = [x,y]
+                else:
+                    if i !=0 and c not in glob.BusCNID:
+                        volt = glob.voltMap[c]
+                        tgtx, tgty = glob.CNpos[c]
+                        self.drawLine(x, y, x+20, y, volt)
+                        self.drawLine(x+20,y,x+20,tgty,volt)
+                        self.drawLine(x+20,tgty,tgtx,tgty,volt)
+
             else:
                 if "transformer" in c and defineTrans:
                     oldy = y
@@ -210,6 +220,7 @@ class Node:
         self.width, self.height = map(float, glob.nodeSize[self.name])
         self.representation = {}
         self.initRepresentation()
+        glob.drawnNode[self.tag] = self
 
     def initRepresentation(self):
         self.representation["c"] = "ht.Node"

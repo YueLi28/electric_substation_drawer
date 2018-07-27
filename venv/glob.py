@@ -18,6 +18,8 @@ voltMap = {}
 colorRGB = {"red":"rgb(250,0,0)", "blue": "rgb(0,0,250)", "yellow": "rgb(250,250,0)", "white":"rgb(255,255,255)", "green":"rgb(0,250,150)", "cherry":"rgb(200,40,150)"}
 voltColor = {220: "red", 35: "yellow", 110: "green", 10: "blue", 0:"cherry", 500:"cherry", 4:"white",
              11:"white", 20: "white",22: "white",13:"white", 6: "white", 60:"white", 15:"white", 18:"white"}
+drawnNode = {}
+
 
 def getVoltRGB(Volt):
     name = voltColor[Volt]
@@ -45,9 +47,9 @@ class BusSkeleton:
         return BNumber * 120
 
 def isPairEnd(n, ID):
-    if (n in VerticalBusPair and n == VerticalBusPair[ID]):
+    if n in VerticalBusPair and n == VerticalBusPair[ID]:
         return True
-    if (n in HorizontalBusPair and n == HorizontalBusPair[ID]):
+    if n in HorizontalBusPair and n == HorizontalBusPair[ID]:
         return True
     return False
 
@@ -64,7 +66,11 @@ def reset():
     global kaiguanstat
     global voltMap
     global infoMap
+    global CNpos
+    global drawnNode
 
+    drawnNode = {}
+    CNpos = {}
     voltMap = {}
     kaiguanstat = {}
     globOffset = 400

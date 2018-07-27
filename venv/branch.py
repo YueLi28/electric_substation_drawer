@@ -108,7 +108,7 @@ class Branch:
         tmp = findTail(self.node, self.fromNode)
         for i in tmp:
             if i[-1] in glob.BusCNID and glob.isPairEnd(i[-1], self.parent.cnID): #draw the pair
-                if (len(i) == 2 or len(i) == 4 or len(i) == 6) and not self.parent.is32:#Have Assumed only one pair across 2 lines
+                if ((len(i) == 2 or len(i) == 4 or len(i) == 6) and not self.parent.is32) or not self.WithinLayout:#Have Assumed only one pair across 2 lines
                     bridge = i[:-1]
                     newX, newY = self.drawConnection(self.x, self.y, i, self.direction)
                     if not self.isSingle:
@@ -118,13 +118,11 @@ class Branch:
                             self.canvas.drawTail(2*newX - self.x, newY, bridge[len(bridge) / 2 + 1], bridge, self.direction)
                         else:
                             self.canvas.drawTail(newX, newY, bridge[len(bridge)/2], bridge, self.direction)
-
                     break
                 if (len(i) - 18)% 6==  0 :
                     self.draw500Branch(self.x, self.y, i, "up")
                     break
         else:
-            #print tmp, len(tmp)
             raise ValueError("ILLEGAL PAIR")
 
     def find500BranchDirReversed(self, eles):

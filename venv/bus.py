@@ -87,6 +87,7 @@ class Bus:
             n.SetLayout(xStart, self.y)
             xStart += gap
         if len(not_layout_branches) > 2:
+            print [x.node for x in not_layout_branches]
             raise ValueError("I do not know how to draw this")
         tmpdir = direction
         not_layout_branches.sort(cmp=No_Layout_Branch_CMP)
