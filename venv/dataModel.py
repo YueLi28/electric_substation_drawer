@@ -251,12 +251,12 @@ class Node:
             self.representation["p"]["image"] = "symbols/electricity/%s.json" % self.name
         self.representation["s"] = {"label": ""}
         if self.name == "daozha":
-            if glob.daozhastat[int(self.id)] == 1:
+            if glob.infoMap[self.tag]["point"] == 1:
                 self.representation["a"]["state"] = True
             else:
                 self.representation["a"]["state"] = False
         if self.name == "kaiguan":
-            if glob.kaiguanstat[int(self.id)] == 1:
+            if glob.infoMap[self.tag]["point"] == 1:
                 self.representation["a"]["state"] = True
             else:
                 self.representation["a"]["state"] = False

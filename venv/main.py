@@ -26,6 +26,12 @@ def iriToUri(iri):
 
 
 class drawer():
+
+    def mutateTransformerName(self, name):
+        if "transformer" in name:
+            name = name[:-1] + "." + name[-1]
+        return name
+
     def __init__(self, name):
         self.colorHead = {}
         glob.reset()
@@ -43,11 +49,11 @@ class drawer():
         else:
             with open(fname,'rb') as f:
                 data = pickle.load(f)
-        datasets = data["results"][0]["@@setedge"]
+        edges = data["results"][0]["@@setedge"]
         self.adjDict = collections.defaultdict(set)
-        for points in datasets:
-            fromNode = points["from_type"] + "#" + points["from_id"]
-            toNode = points["to_type"] + "#" + points["to_id"]
+        for points in edges:
+            fromNode = self.mutateTransformerName(points["from_type"] + "#" + points["from_id"])
+            toNode = self.mutateTransformerName(points["to_type"] + "#" + points["to_id"])
             # print points["from_type"]
             self.adjDict[fromNode].add(toNode)
             self.adjDict[toNode].add(fromNode)
@@ -55,22 +61,19 @@ class drawer():
             self.adjDict[k] = list(self.adjDict[k])
         self.busCN = set()
         self.VoltBUSDict = collections.defaultdict(set)
-        for each in data["results"][1]["vertexSet"]:
+        nodes = data["results"][1]["vertexSet"]
+        for each in nodes:
+            nodeName = self.mutateTransformerName(each["v_type"] + "#" + each["v_id"])
             if each["v_type"] == "BUS":
-                busID = "BUS#" + each["v_id"]
-                bCN = self.adjDict[busID][0]
+                bCN = self.adjDict[nodeName][0]
                 if len(self.adjDict[bCN]) > 1:
-                    self.VoltBUSDict[int(each["attributes"]["volt"])].add(self.adjDict[busID][0])
+                    self.VoltBUSDict[int(each["attributes"]["volt"])].add(self.adjDict[nodeName][0])
                     self.busCN.add(bCN)
                     glob.infoMap[bCN] = each["attributes"]
-            if each["v_type"] == "Disconnector":
-                glob.daozhastat[each["attributes"]["id"]] = each["attributes"]["point"]
-            if each["v_type"] == "Breaker":
-                glob.kaiguanstat[each["attributes"]["id"]] = each["attributes"]["point"]
             if "transformer" in each["v_type"]:
-                self.colorHead[each["v_type"]+"#"+each["v_id"]]=each["attributes"]["volt"]
+                self.colorHead[nodeName]=each["attributes"]["volt"]
             if "BUS" in each["v_type"]:
-                self.colorHead[each["v_type"] + "#" + each["v_id"]] = each["attributes"]["volt"]
+                self.colorHead[nodeName] = each["attributes"]["volt"]
             glob.infoMap[each["v_type"] + "#" + each["v_id"]] = each['attributes']
         glob.fillRelation(self.adjDict, self.busCN)
         self.coloring()
@@ -102,8 +105,11 @@ class drawer():
         return False
 
 
+    def findIsland(self):
+        print self.busCN
 
     def newdraw(self, isTest):
+        self.findIsland()
         x = Canvas(self.name)
         isl = Island.Island(self.VoltBUSDict)
         isl.draw(x)
@@ -143,7 +149,7 @@ import operator
 
 isTest = False
 
-inp = "国调.向家坝"
+inp = "四川.水牛家厂"
 inp = unicode(inp, "utf-8")
 #k = tester()
 #25745: Vertical bus pair

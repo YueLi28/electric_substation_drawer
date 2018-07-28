@@ -19,7 +19,7 @@ colorRGB = {"red":"rgb(250,0,0)", "blue": "rgb(0,0,250)", "yellow": "rgb(250,250
 voltColor = {220: "red", 35: "yellow", 110: "green", 10: "blue", 0:"cherry", 500:"cherry", 4:"white",
              11:"white", 20: "white",22: "white",13:"white", 6: "white", 60:"white", 15:"white", 18:"white"}
 drawnNode = {}
-
+infoMap = {}
 
 def getVoltRGB(Volt):
     name = voltColor[Volt]
