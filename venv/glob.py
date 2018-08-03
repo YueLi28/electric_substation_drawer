@@ -6,8 +6,8 @@ adjDict = {}
 BusCNID = set()
 BusDict = {}
 nodeSize = {"daozha": (48, 58), "daozhakai": (48, 58), "kaiguan": (24, 64), "singlearrow": (24, 64),
-            "kaiguankai": (24, 64), "CN": (0, 0), "transformer2": (48, 60), "transformer3": (85, 66),
-            "generator": (40, 40)}
+            "kaiguankai": (24, 64), "CN": (0, 0), "transformer2": (72, 90), "transformer3": (127.5, 99),
+            "generator": (40, 40), "C_S":(40, 40)}
 daozhastat = {}
 kaiguanstat = {}
 sideBusFP = ['Disconnector', 'Disconnector', 'Breaker', 'Disconnector']
@@ -17,9 +17,10 @@ globOffset = 200
 voltMap = {}
 colorRGB = {"red":"rgb(250,0,0)", "blue": "rgb(0,0,250)", "yellow": "rgb(250,250,0)", "white":"rgb(255,255,255)", "green":"rgb(0,250,150)", "cherry":"rgb(200,40,150)"}
 voltColor = {220: "red", 35: "yellow", 110: "green", 10: "blue", 0:"cherry", 500:"cherry", 4:"white",
-             11:"white", 20: "white",22: "white",13:"white", 6: "white", 60:"white", 15:"white", 18:"white"}
+             11:"white", 20: "white",22: "white",13:"white", 6: "white", 60:"white", 15:"white", 18:"white", 24:"white"}
 drawnNode = {}
 infoMap = {}
+VoltPosition = {}
 
 def getVoltRGB(Volt):
     name = voltColor[Volt]
@@ -68,7 +69,9 @@ def reset():
     global infoMap
     global CNpos
     global drawnNode
+    global VoltPosition
 
+    VoltPosition = {}
     drawnNode = {}
     CNpos = {}
     voltMap = {}

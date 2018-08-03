@@ -1,5 +1,5 @@
 from branch import *
-
+import Utility
 
 
 def branchCMP(b1, b2):
@@ -15,9 +15,15 @@ def branchCMP(b1, b2):
 
 def transformerBranchCMP(b1, b2):
     if b1.isReversed and b1.transName and "three" in b1.transName:
-        return 1
+        if Utility.findTransformerObj(b1.transName):
+            return -1
+        else:
+            return 1
     if b2.isReversed and b2.transName and "three" in b2.transName:
-        return -1
+        if Utility.findTransformerObj(b2.transName):
+            return 1
+        else:
+            return -1
     return 0
 
 
@@ -68,6 +74,15 @@ class Bus:
         self.generateLayout(self.branches, self.direction, 0 )
         self.generateLayout(self.reversedBranches, reverseDirect(self.direction), 20)
 
+    def hasLargeBranch(self, branches, gap):
+        tmpMAX = 0
+        for n in branches:
+            tmpMAX = max(n.estimatedSize+100, tmpMAX)
+        if tmpMAX > gap:
+            return True
+        else:
+            return False
+
 
     def generateLayout(self, branches, direction, offset):
         layout_branches = [b for b in branches if b.WithinLayout]
@@ -82,9 +97,18 @@ class Bus:
         xStart = self.x - self.length / 2 + localOffset + offset
         if self.cnID in glob.VerticalBusPair and self.cnID < glob.VerticalBusPair[self.cnID]:
             xStart -= 30
+
+        if self.hasLargeBranch(layout_branches, gap):
+            hasLargeB = True
+        else:
+            hasLargeB = False
         for n in layout_branches:
             n.SetLayout(xStart, self.y)
-            xStart += gap
+            #xStart += gap
+            if hasLargeB:
+                xStart += n.estimatedSize+100
+            else:
+                xStart += gap
         if len(not_layout_branches) > 2:
             print [x.node for x in not_layout_branches]
             raise ValueError("I do not know how to draw this")

@@ -77,6 +77,9 @@ class TailDrawer:
 
 
 
+    def rightCMP(self, b1, b2): #sort the sub-branches
+        return len(glob.adjDict[b1[-1]]) - len(glob.adjDict[b2[-1]])
+
 
     def findDirectTail(self, paths):
         direct = []
@@ -90,7 +93,7 @@ class TailDrawer:
                 seconddirect.append(path)
             else:
                 right.append(path)
-
+        right.sort(cmp=self.rightCMP)
         tmp = direct+seconddirect + right
         if len(tmp) > 0:
             direct = tmp[:1]

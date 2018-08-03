@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import urllib, json
 import collections
 import glob
 import Utility
+import SizeEstimator
 
 
 
@@ -20,7 +20,16 @@ class LayoutFinder:
 
 
     def getEstimatedLength(self, cnID):
+        return self.newGetEstimatedLength(cnID)
         return 100 * len(glob.adjDict[cnID])
+
+    def newGetEstimatedLength(self, cnID):
+        Hs =  [x for x in glob.adjDict[cnID] if "BUS" not in x]
+        res = 0
+        for h in Hs:
+            res += 100 + SizeEstimator.estimateWidth(h, [cnID])
+        return res
+
 
 
     def FixedTransformer(self, buses):
@@ -51,8 +60,8 @@ class LayoutFinder:
             fixedT.sort(key = lambda x: x[1].x)
             sortedBus = [x[0] for x in fixedT]
             sortedPos = [x[1] for x in fixedT]
-            self.y = sortedPos[0].y + glob.globOffset
-            glob.globOffset += 200
+            self.y = max([x.y for x in sortedPos]) + glob.globOffset
+            glob.globOffset += 300
             seen = set()
             seen_add = seen.add
             tails = [x for x in buses if x not in sortedBus]
@@ -62,7 +71,6 @@ class LayoutFinder:
                     self.buses +=  [tails[i]]
                 else:
                     self.buses = [tails[i]] + self.buses
-
             self.x = sum([e.x for e in sortedPos]) / (len(set(sortedPos)))
 
     #def sortBuses(self):
@@ -81,6 +89,8 @@ class LayoutFinder:
             return self.determineLayout3()
         elif len(self.buses) == 4:
             return self.determineLayout4()
+        elif len(self.buses) == 5:
+            return self.randomPut()
         else:
             print "unknown pattern:", len(self.buses)
             return []
@@ -89,56 +99,114 @@ class LayoutFinder:
 
     def findVertical(self, cn):
         branchHeads = [x for x in glob.adjDict[cn] if "BUS" not in x]
-        busPairFP = []
+        busPairs = []
         for h in branchHeads:
             lines = [[cn] + x for x in Utility.findTail(h, [cn])]
             for line in lines:
                 if line[-1] in self.busCN:
                     if line[-1] != cn:
-                        l = [x.split("#")[0] for x in line if "CN" not in x]
-                        if l == glob.busPairFP and len(lines)!=1:
-                            busPairFP.append(line[-1])
+                        if len(line) >= 13 and (len(line) - 13)%6==0:
+                            busPairs.append(line[-1])
+
+                        else:
+                            l = [x.split("#")[0] for x in line if "CN" not in x]
+                            if l == glob.busPairFP and len(lines)!=1:
+                                busPairs.append(line[-1])
                     else:
                         raise ValueError("SELF CONNECTED")
-        return busPairFP
+        return busPairs
 
     def findHorizontal(self, cn):
         branchHeads = [x for x in glob.adjDict[cn] if "BUS" not in x]
-        busConnector = []
+        Ct = collections.Counter()
         for h in branchHeads:
             lines = [[cn] + x for x in Utility.findTail(h, [cn])]
             for line in lines:
                 if line[-1] in self.busCN:
                     if line[-1] != cn:
-                        l = [x.split("#")[0] for x in line if "CN" not in x]
-
-                        if len(l) == 3 or len(l)==1:
-                            busConnector.append(line[-1])
+                        Ct[line[-1]]+=1
                     else:
                         raise ValueError("SELF CONNECTED")
-        return busConnector
+        for k in Ct.keys():
+            if Ct[k] == 1:
+                return k
+        return None
+
+    def randomPut(self):
+        self.find2newX(self.buses)
+        totalW = 0
+        for b in self.buses:
+            totalW += self.getEstimatedLength(b)
+        totalGap = (len(self.buses) - 1) * 100
+        totalW += totalGap
+        startingPoint = self.x - totalW/2
+        for b in self.buses:
+            w = self.getEstimatedLength(b)
+            glob.placeBus(b, startingPoint+w/2, self.y, w, self.dir)
+            startingPoint += w+100
+        return self.buses
+
+    def notConnected(self):
+        for b in self.buses:
+            if len(glob.findAttachedBus(b)) != 0:
+                break
+        else:
+            return True
+        return False
 
     def determineLayout4(self):
-        stats = [(cn, self.newCheckStat(cn)) for cn in self.buses]
+        if self.notConnected():
+            return self.randomPut()
+        sBus = self.findSideBus()
+        if sBus:
+            print "HAS SIDE BUS"
+            self.buses = [x for x in self.buses if x != sBus]
+            bses = self.determineLayout3()
+            if self.dir == "up":
+                sY = -450
+            else:
+                sY = 450
+            sWidth = 0
+            sX = self.x
+            for b in bses:
+                if glob.BusDict[b].w > sWidth:
+                    sWidth = glob.BusDict[b].w
+                    sX = glob.BusDict[b].x
+
+            glob.placeBus(sBus, sX, self.y + sY, sWidth, self.dir)
+            return bses + [sBus]
+
         for cn in self.buses:
+            self.checkStat(cn)
             tmp = self.findVertical(cn)
             if len(set(tmp)) == 1:
                 glob.AddVerticalBusPair(cn, tmp[0])
             else:
-                print tmp, cn
-                raise ValueError("AAAA")
-            tmp = [x for x in self.findHorizontal(cn) if x!=glob.VerticalBusPair[cn]]
-            glob.AddHorizontalBusPair(cn, tmp[0])
-            b1, b2 = cn, tmp[0]
-        b3, b4 = glob.VerticalBusPair[b1],glob.VerticalBusPair[b2]
+                raise ValueError("CANNOT FIND VERTICAL BUS PAIR")
 
+
+            tmp = self.findHorizontal(cn)
+            glob.AddHorizontalBusPair(cn, tmp)
+            b1, b2 = cn, tmp
+        b3, b4 = glob.VerticalBusPair[b1],glob.VerticalBusPair[b2]
         w1,w2 = max(self.getEstimatedLength(b1),self.getEstimatedLength(b3)), max(self.getEstimatedLength(b2),self.getEstimatedLength(b4))
-        glob.placeBus(b1, self.x - w1 / 2 - 50, self.y, w1, self.dir)
-        glob.placeBus(b2, self.x + w2 / 2 + 50, self.y, w2, self.dir)
-        glob.placeBus(b3, self.x - w1 / 2 - 50, self.y+50, w1, self.dir)
-        glob.placeBus(b4, self.x + w2 / 2 + 50, self.y+50, w2, self.dir)
+        if self.is32:
+            glob.placeBus(b1, self.x-w1/2-50, self.y + 250 + 100 * self.offset32, w1, self.dir)
+            glob.placeBus(b3, self.x-w1/2-50, self.y - 250 - 100 * self.offset32, w1, self.dir)
+            glob.placeBus(b2, self.x+w2/2+50, self.y + 250 + 100 * self.offset32, w2, self.dir)
+            glob.placeBus(b4, self.x+w2/2+50, self.y - 250 - 100 * self.offset32, w2, self.dir)
+            glob.BusDict[b1].define32()
+            glob.BusDict[b2].define32()
+            glob.BusDict[b3].define32()
+            glob.BusDict[b4].define32()
+        else:
+            glob.placeBus(b1, self.x - w1 / 2 - 50, self.y, w1, self.dir)
+            glob.placeBus(b2, self.x + w2 / 2 + 50, self.y, w2, self.dir)
+            glob.placeBus(b3, self.x - w1 / 2 - 50, self.y+50, w1, self.dir)
+            glob.placeBus(b4, self.x + w2 / 2 + 50, self.y+50, w2, self.dir)
         glob.BusDict[b1].reverseConnector()
         return [b1,b2,b3,b4]
+
 
 
 
@@ -180,13 +248,13 @@ class LayoutFinder:
         b1, b2 = self.buses
         sideBus = self.findSideBus()
         if sideBus is not None:
+            print "HAS SIDE BUS"
             if b1 == sideBus:
                 otherBus = b2
             else:
                 otherBus = b1
             return self.OnePlusSide(otherBus, sideBus)
-
-        busD = self.checkStat(b1)[0]
+        busD = self.checkStat(b1)
         if self.is32:
             if hasDirectionTransformer(b2):
                 b1, b2 = b2, b1
@@ -196,6 +264,7 @@ class LayoutFinder:
             glob.BusDict[b1].define32()
             glob.BusDict[b2].define32()
             return [b1,b2]
+
         if busD[1] > busD[0]:#vertical pair
             glob.AddVerticalBusPair(b1, b2)
             w = self.getEstimatedLength(b1)
@@ -213,13 +282,14 @@ class LayoutFinder:
         stats = [(cn, self.newCheckStat(cn)) for cn in self.buses]
         for cn, stat in stats:
             if stat[0] > 0:#has side bus
+                print "HAS SIDE BUS2"
                 s = cn
                 b1, b2 = [c for c in self.buses if c!=cn]
                 tmp = self.newCheckStat(b1)
                 if self.dir == "up":
-                    sY = -400
+                    sY = -450
                 else:
-                    sY = 400
+                    sY = 450
                 if tmp[1] > tmp[2]:#vertical pair
                     glob.AddVerticalBusPair(b1, b2)
                     width = max(self.getEstimatedLength(b1), self.getEstimatedLength(b2))
@@ -242,11 +312,9 @@ class LayoutFinder:
                     maxB = bStat[1]
             if maxCN == None:#3 bus horizontally aligned
                 b1, b2, b3 = self.buses
-                print b1, b2, b3
                 w1, w2, w3 = self.getEstimatedLength(b1), self.getEstimatedLength(b2), self.getEstimatedLength(b3)
                 glob.AddHorizontalBusPair(b1, b2)
                 glob.AddHorizontalBusPair(b2, b3)
-                print w1, w2, w3
                 totalL = (w1+w2+w3+200)
                 glob.placeBus(b1, self.x - totalL/2 + w1/2, self.y, w1, self.dir)
                 glob.placeBus(b2, self.x -totalL/2 + w1+100+w2/2, self.y, w2, self.dir)
@@ -267,7 +335,6 @@ class LayoutFinder:
     def checkStat(self, cn):
         branchHeads = [x for x in glob.adjDict[cn] if "BUS" not in x]
         busD = collections.Counter()
-        checkSideBus = [0, 0]
         for h in branchHeads:
             lines = [[cn]+x for x in Utility.findTail(h, [cn])]
             Otherbus = 0
@@ -279,18 +346,11 @@ class LayoutFinder:
                         tmpLines.append(line)
                     else:
                         raise ValueError("SELF CONNECTED")
-            if len(tmpLines) == 2:
-                l1, l2 = tmpLines
-                if len(l1) == len(l2): #Two lines look identical for a side bus
-                    checkSideBus[0] += 1
-                else:
-                    checkSideBus[1] += 1
             if len(tmpLines) == 1 and len(tmpLines[0]) >= 13 and (len(tmpLines[0]) - 13)%6==0: #500 volt station
                 self.offset32 = max(self.offset32, (len(tmpLines[0])-13)/6)
                 self.is32 = True
-
             busD[Otherbus] += 1
-        return busD, checkSideBus
+        return busD
 
 
 

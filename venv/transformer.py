@@ -2,7 +2,7 @@ import glob
 class Transformer2port:
     def __init__(self, name, x, y, direction, canv, adjDict):
         self.name = name
-        self.size = [48, 60]
+        self.size = [72, 90]
         self.x = x
         self.canv = canv
         self.adjDict = adjDict
@@ -10,18 +10,16 @@ class Transformer2port:
         self.TailDrawn = False
 
         if direction == "up":
-            self.y = y + 33
-            self.other = [self.x, self.y-30]
+            self.y = y + self.size[1]/2
+            self.other = [self.x, self.y-self.size[1]/2]
         else:
-            self.y = y - 33
-            self.other = [self.x, self.y+30]
+            self.y = y - self.size[1]/2
+            self.other = [self.x, self.y+self.size[1]/2]
         self.arrangeBus()
         self.drawTails()
 
     def getCorrectPort(self, x, y):
         return self.other
-
-
 
     def findTailHead(self):
         tailHs = [x for x in self.adjDict[self.name] if "transformer" in x]
@@ -87,14 +85,14 @@ class Transformer2port:
 class Transformer3port:
     def __init__(self, name, x, y, direction, canv, adjDict):
         self.name = name
-        self.size = [85, 66]
+        self.size = [127.5, 99]
         self.x = x
         if direction == "up":
-            self.y = y + 33
-            self.ports = [[self.x + 42.5, self.y], [self.x, self.y - 33]]
+            self.y = y + self.size[1]/2
+            self.ports = [[self.x + self.size[0]/2, self.y], [self.x, self.y - self.size[1]/2]]
         else:
-            self.y = y - 33
-            self.ports = [[self.x + 42.5, self.y], [self.x, self.y + 33]]
+            self.y = y - self.size[1]/2
+            self.ports = [[self.x + self.size[0]/2, self.y], [self.x, self.y + self.size[1]/2]]
         #print "Define a transformer: %s at (%d, %d), direction %s"%(name, self.x ,self.y, direction)
         self.direction = direction
         self.idx = 0
@@ -108,10 +106,10 @@ class Transformer3port:
     def getCorrectPort(self, x, y):
         if y < self.y:#right port
             self.idx = 1
-            return [self.x + 42.5, self.y]
+            return [self.x + self.size[0]/2, self.y]
         else: #lower port
             self.idx = 0
-            return [self.x, self.y + 33]
+            return [self.x, self.y + self.size[1]/2]
 
     def nextIsStrightPort(self):
         if self.idx == 1:
@@ -158,6 +156,17 @@ class Transformer3port:
                 return tmp
             future.extend(self.adjDict[tmp])
         return None
+
+    def isBlockingOtherTransformers(self):
+        tailHs = [x for x in self.adjDict[self.np] if x != self.name]
+        tailHs.sort(key=lambda x: glob.voltMap[x], reverse=True)
+        for h in tailHs:
+            bus = self.BusConnected(h, self.np)
+            if bus:
+                busY = glob.VoltPosition[glob.infoMap[bus]['volt']][1]
+                if busY < self.y:
+                    return True
+        return False
 
 
     def findNeutralPoint(self):

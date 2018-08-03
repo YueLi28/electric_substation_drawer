@@ -3,6 +3,8 @@ import transformer
 import glob
 import random
 import SizeEstimator
+import warnings
+
 DrawnTail = set()
 
 
@@ -23,10 +25,9 @@ class Branch:
         self.direction = direction
         self.transName = None
         self.hasGen = False
-
         self.newFindProperty(node, fromNode)
+        self.estimatedSize = SizeEstimator.estimateWidth(node, fromNode)
 
-        #SizeEstimator.estimateWidth(self)
 
 
     def newFindProperty(self, node, fromNode):
@@ -35,9 +36,6 @@ class Branch:
             self.isSingle = False
         shouldReverse = False
         for t in tails:
-            if node == "Disconnector#2091":
-                print t, tails
-                print tails, glob.VerticalBusPair[self.parent.cnID],t[-1]== glob.VerticalBusPair[self.parent.cnID]
             if self.parent.cnID in glob.VerticalBusPair and t[-1] == glob.VerticalBusPair[self.parent.cnID]:
                 self.isPaired = True
             if self.parent.cnID in glob.HorizontalBusPair and t[-1] == glob.HorizontalBusPair[self.parent.cnID]:
@@ -57,7 +55,7 @@ class Branch:
                     if transformer.Transformer2port.BusConnected(otherport, t[-1]):# Connected to another bus
                         shouldReverse = True
                     else:
-                        if transformer.Transformer2port.hasGenerator(otherport, t[-1]):
+                        if transformer.Transformer2port.hasGenerator(otherport, t[-1]) or glob.voltMap[otherport] < glob.voltMap[t[-1]]:
                             self.direction = "down"
                 else:
                     shouldReverse = True
@@ -118,12 +116,13 @@ class Branch:
                             self.canvas.drawTail(2*newX - self.x, newY, bridge[len(bridge) / 2 + 1], bridge, self.direction)
                         else:
                             self.canvas.drawTail(newX, newY, bridge[len(bridge)/2], bridge, self.direction)
+
                     break
                 if (len(i) - 18)% 6==  0 :
                     self.draw500Branch(self.x, self.y, i, "up")
                     break
         else:
-            raise ValueError("ILLEGAL PAIR")
+            warnings.warn("ILLEGAL PAIR:" + self.node, RuntimeWarning)
 
     def find500BranchDirReversed(self, eles):
         for line in eles:

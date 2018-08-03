@@ -7,7 +7,7 @@ import urllib, json
 import collections
 import re, urlparse
 import Island
-workingdir = u"/tmp/offlineData/"
+workingdir = u"/home/liyue/substation_offline/"
 
 
 
@@ -39,7 +39,8 @@ class drawer():
         fname = workingdir + name
         try:
             url = u"http://192.168.2.5:9000/query/TwoOptionsNAME?SubstationNAME="+name
-            response = urllib.urlopen(iriToUri(url))
+            print url
+            response = urllib.urlopen(iriToUri(url), timeout=1)
             data = json.loads(response.read())
         except:
             data = {}
@@ -106,15 +107,35 @@ class drawer():
 
 
     def findIsland(self):
-        print self.busCN
+        candidates = list(self.busCN)
+        islands = []
+        while candidates:
+            seed = candidates.pop()
+            res = [seed]
+            visited = []
+            future = [seed]
+            while future:
+                tmp = future.pop()
+                if tmp in visited:
+                    continue
+                if tmp in candidates:
+                    candidates.remove(tmp)
+                    res.append(tmp)
+                visited.append(tmp)
+                future.extend(glob.adjDict[tmp])
+            islands.append(res)
+        return islands
 
     def newdraw(self, isTest):
-        self.findIsland()
+        islands = self.findIsland()
         x = Canvas(self.name)
-        isl = Island.Island(self.VoltBUSDict)
-        isl.draw(x)
+        islX, islY = 0, 0
+        for i in islands:
+            isl = Island.Island(i, islX, islY)
+            isl.draw(x)
+            islX+=2000
         if isTest:
-            x.printToFile(u"/tmp/stationDraw/"+self.name+u".js")
+            x.printToFile(u"/home/liyue/substation_Json/"+self.name+u".js")
         else:
             x.printToFile()
 
@@ -123,7 +144,7 @@ class tester:
     def __init__(self):
         ct = collections.Counter()
         count = 0
-        with open("/tmp/Substation.csv","r") as f:
+        with open("/home/liyue/substation_offline/Substation.csv","r") as f:
             ids = [x.strip().split(',')[1] for x in f.readlines()]
             names = list((set(ids)))
             print len(names)
@@ -149,7 +170,7 @@ import operator
 
 isTest = False
 
-inp = "四川.水牛家厂"
+inp = "四川.德昌风电厂"
 inp = unicode(inp, "utf-8")
 #k = tester()
 #25745: Vertical bus pair

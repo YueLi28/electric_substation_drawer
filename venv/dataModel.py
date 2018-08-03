@@ -115,6 +115,8 @@ class Canvas:
 
         def update(y, c):  # move down 1/2 height of c
             cType = cleanElement(c.split("#")[0])
+            if cType == "C_S":
+                return y
             if direction == "up":
                 y -= float(glob.nodeSize[cType][1]) / 2
             elif direction == "down":
@@ -144,13 +146,11 @@ class Canvas:
                     y = update(y, c)
                     y = update(y, c)
                     self.drawLine(x, oldy, x, y, volt)
-                    for t in glob.AllTrans:
-                        if "three" in glob.AllTrans[t].name and abs(glob.AllTrans[t].y - y) < 66:
-                            oldy = y
-                            y = update(y, c)
-                            y = update(y, c)
-                            self.drawLine(x,oldy,x,y, volt)
-
+                    while self.CollideTrans(y):
+                        oldy = y
+                        y = update(y, c)
+                        y = update(y, c)
+                        self.drawLine(x,oldy,x,y,volt)
                 y = update(y, c)
                 n = Node(c, x, y, direction, volt)
                 res.append(n.getRepresentation())
@@ -163,6 +163,15 @@ class Canvas:
                 self.drawLine(x, y, portX, y, volt)
             self.drawLine(portX, y, portX, portY, volt)
         return y
+
+    def CollideTrans(self, y):
+        for k in glob.AllTrans:
+            transObj = glob.AllTrans[k]
+            if "three" in transObj.name and abs(transObj.y - y) < 99:
+                if transObj.isBlockingOtherTransformers():
+                    return True
+        return False
+
 
     def drawLine(self, startX, startY, endX, endY, color, borderWidth=7):
         l = Line(startX, startY, endX, endY, color, borderWidth)
@@ -242,10 +251,16 @@ class Node:
         if "transformer3" in self.name:
             np = [x for x in glob.adjDict[self.tag] if "neutral_point" in x][0]
             p1,p2 = [x for x in glob.adjDict[np] if x!=self.tag]
-            if glob.voltMap[p1] > glob.voltMap[p2]:
+            v1, v2 = glob.voltMap[p1], glob.voltMap[p2]
+            if v1 < v2:
                 p1, p2 = p2, p1
-            self.representation["a"]["lineColor2"] = glob.getVoltRGB(glob.voltMap[p1])
-            self.representation["a"]["lineColor3"] = glob.getVoltRGB(glob.voltMap[p2])
+                v1, v2 = glob.voltMap[p1], glob.voltMap[p2]
+            if v1 in glob.VoltPosition and glob.VoltPosition[v1][1] > self.y:
+                self.representation["a"]["lineColor2"] = glob.getVoltRGB(glob.voltMap[p2])
+                self.representation["a"]["lineColor3"] = glob.getVoltRGB(glob.voltMap[p1])
+            else:
+                self.representation["a"]["lineColor2"] = glob.getVoltRGB(glob.voltMap[p1])
+                self.representation["a"]["lineColor3"] = glob.getVoltRGB(glob.voltMap[p2])
 
         if self.name != "CN":
             self.representation["p"]["image"] = "symbols/electricity/%s.json" % self.name
