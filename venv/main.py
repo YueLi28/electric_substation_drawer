@@ -37,13 +37,12 @@ class drawer():
         glob.reset()
         self.name = name
         fname = workingdir + name
-        try:
-            url = u"http://192.168.2.5:9000/query/TwoOptionsNAME?SubstationNAME="+name
-            print url
-            response = urllib.urlopen(iriToUri(url), timeout=1)
-            data = json.loads(response.read())
-        except:
-            data = {}
+        # try:
+        url = u"http://192.168.2.3:9000/query/TwoOptionsNAME?SubstationNAME="+name
+        response = urllib.urlopen(iriToUri(url))
+        data = json.loads(response.read())
+        # except:
+        #     data = {}
         if "results" in data:#Try to use online data, if no Online data, use offline data
             with open(fname, 'wb') as f:
                 pickle.dump(data, f)
@@ -134,6 +133,7 @@ class drawer():
             isl = Island.Island(i, islX, islY)
             isl.draw(x)
             islX+=2000
+            break
         if isTest:
             x.printToFile(u"/home/liyue/substation_Json/"+self.name+u".js")
         else:
@@ -160,7 +160,7 @@ class tester:
                     print "VISITED: ", name
                     continue
                 try:
-                    print name, [[e, len(x.VoltBUSDict[e])] for e in x.VoltBUSDict]
+                    print name, [[e, len(x.VoltBUSDict[e])] for e in x.VoltBUSDict], "VOLTAGE LEVEL:", len(x.VoltBUSDict)
                     x.newdraw(True)
                 except Exception, err:
                     print "\tCANNOT DRAW: ", err
@@ -170,7 +170,7 @@ import operator
 
 isTest = False
 
-inp = "四川.德昌风电厂"
+inp = "西南.橄榄"
 inp = unicode(inp, "utf-8")
 #k = tester()
 #25745: Vertical bus pair
