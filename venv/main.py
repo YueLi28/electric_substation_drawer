@@ -7,7 +7,7 @@ import urllib, json
 import collections
 import re, urlparse
 import Island
-workingdir = u"/home/liyue/substation_offline/"
+workingdir = u"/home/liyue/tmp/"
 
 
 
@@ -37,16 +37,18 @@ class drawer():
         glob.reset()
         self.name = name
         fname = workingdir + name
-        # try:
-        url = u"http://192.168.2.3:9000/query/TwoOptionsNAME?SubstationNAME="+name
-        response = urllib.urlopen(iriToUri(url))
-        data = json.loads(response.read())
-        # except:
-        #     data = {}
+        try:
+            url = u"http://192.168.2.5:9000/query/TwoOptionsNAME?SubstationNAME="+name
+            response = urllib.urlopen(iriToUri(url))
+            data = json.loads(response.read())
+        except:
+            data = {}
         if "results" in data:#Try to use online data, if no Online data, use offline data
+            print "Data received from remote host"
             with open(fname, 'wb') as f:
                 pickle.dump(data, f)
         else:
+            print "Try to get offline data"
             with open(fname,'rb') as f:
                 data = pickle.load(f)
         edges = data["results"][0]["@@setedge"]
@@ -133,7 +135,6 @@ class drawer():
             isl = Island.Island(i, islX, islY)
             isl.draw(x)
             islX+=2000
-            break
         if isTest:
             x.printToFile(u"/home/liyue/substation_Json/"+self.name+u".js")
         else:
@@ -170,7 +171,7 @@ import operator
 
 isTest = False
 
-inp = "西南.橄榄"
+inp = "四川.洗马姑厂"
 inp = unicode(inp, "utf-8")
 #k = tester()
 #25745: Vertical bus pair

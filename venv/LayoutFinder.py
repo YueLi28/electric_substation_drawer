@@ -21,14 +21,13 @@ class LayoutFinder:
 
     def getEstimatedLength(self, cnID):
         return self.newGetEstimatedLength(cnID)
-        return 100 * len(glob.adjDict[cnID])
 
     def newGetEstimatedLength(self, cnID):
         Hs =  [x for x in glob.adjDict[cnID] if "BUS" not in x]
         res = 0
         for h in Hs:
-            res += 100 + SizeEstimator.estimateWidth(h, [cnID])
-        return res
+            res += 120 + SizeEstimator.estimateWidth(h, [cnID])
+        return max(res, 400)
 
 
 
@@ -50,8 +49,9 @@ class LayoutFinder:
             t = fixedT[0][1]
             if t.y > self.y:
                 self.dir = Utility.reverseDirect(self.dir)
-            self.y = t.y + glob.globOffset
-            glob.globOffset += 300
+            if glob.globOffset is None:
+                glob.globOffset = t.y + 450
+            self.y =  glob.globOffset
             self.x = t.x
 
     def find2newX(self, buses):
@@ -60,8 +60,9 @@ class LayoutFinder:
             fixedT.sort(key = lambda x: x[1].x)
             sortedBus = [x[0] for x in fixedT]
             sortedPos = [x[1] for x in fixedT]
-            self.y = max([x.y for x in sortedPos]) + glob.globOffset
-            glob.globOffset += 300
+            if glob.globOffset is None:
+                glob.globOffset = max([x.y for x in sortedPos]) + 450
+            self.y = glob.globOffset
             seen = set()
             seen_add = seen.add
             tails = [x for x in buses if x not in sortedBus]
@@ -93,7 +94,7 @@ class LayoutFinder:
             return self.randomPut()
         else:
             print "unknown pattern:", len(self.buses)
-            return []
+            return self.randomPut()
 
 
 

@@ -18,7 +18,7 @@ class Transformer2port:
         self.arrangeBus()
         self.drawTails()
 
-    def getCorrectPort(self, x, y):
+    def getCorrectPort(self, volt):
         return self.other
 
     def findTailHead(self):
@@ -43,7 +43,7 @@ class Transformer2port:
         bus = self.BusConnected(t, self.name)
         if  bus == None:
             drawableHead = [x for x in self.adjDict[t] if x != self.name][0]
-            x,y = self.getCorrectPort(0, 0)
+            x,y = self.getCorrectPort(None)
             if self.direction == "up":
                 off = -40
             else:
@@ -98,18 +98,33 @@ class Transformer3port:
         self.idx = 0
         self.adjDict = adjDict
         self.canv = canv
+        self.rightPortVolt = None
+        self.lowerPortVolt = None
         self.np = self.findNeutralPoint()
         self.arrangeBus()
+        self.findPortVolt()
 
 
+    def findPortVolt(self):
+        np = [x for x in glob.adjDict[self.name] if "neutral_point" in x][0]
+        p1, p2 = [x for x in glob.adjDict[np] if x != self.name]
+        v1, v2 = glob.voltMap[p1], glob.voltMap[p2]
+        if v1 < v2:
+            p1, p2 = p2, p1
+            v1, v2 = glob.voltMap[p1], glob.voltMap[p2]
 
-    def getCorrectPort(self, x, y):
-        if y < self.y:#right port
-            self.idx = 1
-            return [self.x + self.size[0]/2, self.y]
-        else: #lower port
-            self.idx = 0
-            return [self.x, self.y + self.size[1]/2]
+        if v1 in glob.VoltPosition and glob.VoltPosition[v1][1] > self.y:
+            self.rightPortVolt = glob.voltMap[p2]
+            self.lowerPortVolt = glob.voltMap[p1]
+        elif v2 in glob.VoltPosition and glob.VoltPosition[v2][1] < self.y:
+            self.rightPortVolt = glob.voltMap[p2]
+            self.lowerPortVolt = glob.voltMap[p1]
+        else:
+            self.rightPortVolt = glob.voltMap[p1]
+            self.lowerPortVolt = glob.voltMap[p2]
+
+    def getCorrectPort(self, volt):
+        return self.getPortFromVolt(volt)
 
     def nextIsStrightPort(self):
         if self.idx == 1:
@@ -121,6 +136,16 @@ class Transformer3port:
         self.idx += 1
         self.idx = self.idx % 2
         return res
+
+    def getPortFromVolt(self, volt):
+        x,y = self.getNextPort()
+        if volt == self.rightPortVolt:
+            if y != self.y:
+                x,y = self.getNextPort()
+        else:
+            if y == self.y:
+                x,y = self.getNextPort()
+        return x, y
 
     def arrangeBus(self):
         tailHs = [x for x in self.adjDict[self.np] if x != self.name]
@@ -136,7 +161,7 @@ class Transformer3port:
             bus = self.BusConnected(h, self.np)
             if bus == None:
                 drawableHead = [x for x in self.adjDict[h] if x != self.np][0]
-                x,y = self.getNextPort()
+                x,y = self.getPortFromVolt(glob.voltMap[h])
                 if y == self.y:#horizontal
                     self.canv.drawLine(x,y,x+40,y,glob.voltMap[h])
                     self.canv.drawTail(x+40, y, drawableHead, [h], self.direction, 73)

@@ -95,7 +95,7 @@ class Canvas:
             if tran is not None:
                 #x = transLoc[0]
                 components = components[:-1]
-                portX, portY = tran.getCorrectPort(x,y)
+                portX, portY = tran.getCorrectPort(glob.infoMap[transName.replace(".","")]['volt'])
                 if portY == tran.y: #3 port transformer going right
                     self.drawLine(portX, portY, x, portY, glob.voltMap[transName])
                     portX = x
@@ -159,7 +159,15 @@ class Canvas:
         if defineTrans:
             self.DefineTransformerLoc(transName, x, y, direction,self)
         elif hasTrans:
-            if x != portX:
+            if x != portX: #cannot draw a vertical line to connect the transformer, need a bend
+                Offset = 50
+                while glob.collidewithOther(x, y-Offset, portX):
+                    if x < portX:
+                        Offset -= 25
+                    else:
+                        Offset += 25
+                self.drawLine(x, y, x, y-Offset, volt)
+                y-=Offset
                 self.drawLine(x, y, portX, y, volt)
             self.drawLine(portX, y, portX, portY, volt)
         return y
@@ -240,8 +248,10 @@ class Node:
 
         self.representation["a"]["lineColor"] = glob.getVoltRGB(self.volt)
         self.representation["a"]["voltage"] = str(self.volt)+"kV"
-        if self.tag in glob.infoMap:
-            self.representation["a"]["name"] = glob.infoMap[self.tag]["name"]
+        tmp = self.tag.replace(".","")
+        if tmp in glob.infoMap:
+            self.representation["a"]["name"] = glob.infoMap[tmp]["name"]
+#            self.representation["a"]["production_id"] = glob.infoMap[tmp]["production_id"]
 
         if "transformer2" in self.name:
             otherport = [x for x in glob.adjDict[self.tag] if "transformer" in x][0]
@@ -258,9 +268,13 @@ class Node:
             if v1 in glob.VoltPosition and glob.VoltPosition[v1][1] > self.y:
                 self.representation["a"]["lineColor2"] = glob.getVoltRGB(glob.voltMap[p2])
                 self.representation["a"]["lineColor3"] = glob.getVoltRGB(glob.voltMap[p1])
+            elif v2 in glob.VoltPosition and glob.VoltPosition[v2][1] < self.y:
+                self.representation["a"]["lineColor2"] = glob.getVoltRGB(glob.voltMap[p2])
+                self.representation["a"]["lineColor3"] = glob.getVoltRGB(glob.voltMap[p1])
             else:
                 self.representation["a"]["lineColor2"] = glob.getVoltRGB(glob.voltMap[p1])
                 self.representation["a"]["lineColor3"] = glob.getVoltRGB(glob.voltMap[p2])
+
 
         if self.name != "CN":
             self.representation["p"]["image"] = "symbols/electricity/%s.json" % self.name

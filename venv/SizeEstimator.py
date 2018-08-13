@@ -20,6 +20,10 @@ def findPairTailDFS(node, visited, res, cur):
 
 def estimateWidth(node, fromNodes):
     tails = findAllTail(node, fromNodes)
+    if node == "Disconnector#8336":
+        print "XXXX"
+        for t in tails:
+            print t
     return (len(tails)-1) * 40
 
 

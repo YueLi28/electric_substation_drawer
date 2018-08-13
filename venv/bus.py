@@ -13,17 +13,23 @@ def branchCMP(b1, b2):
         return 1
     return 0
 
+def getOtherSideVoltage(transName):
+    otherPort = [x for x in glob.adjDict[transName] if "transformer" in x][0]
+    return glob.voltMap[otherPort]
+
 def transformerBranchCMP(b1, b2):
-    if b1.isReversed and b1.transName and "three" in b1.transName:
+    if b1.transName and "three" in b1.transName:
         if Utility.findTransformerObj(b1.transName):
             return -1
         else:
             return 1
-    if b2.isReversed and b2.transName and "three" in b2.transName:
+    if b2.transName and "three" in b2.transName:
         if Utility.findTransformerObj(b2.transName):
             return 1
         else:
             return -1
+    if b1.transName and "two" in b1.transName and b2.transName and "two" in b2.transName:
+        return getOtherSideVoltage(b2.transName) - getOtherSideVoltage(b1.transName)
     return 0
 
 
@@ -77,7 +83,7 @@ class Bus:
     def hasLargeBranch(self, branches, gap):
         tmpMAX = 0
         for n in branches:
-            tmpMAX = max(n.estimatedSize+100, tmpMAX)
+            tmpMAX = max(n.estimatedSize+50, tmpMAX)
         if tmpMAX > gap:
             return True
         else:
@@ -97,11 +103,7 @@ class Bus:
         xStart = self.x - self.length / 2 + localOffset + offset
         if self.cnID in glob.VerticalBusPair and self.cnID < glob.VerticalBusPair[self.cnID]:
             xStart -= 30
-
-        if self.hasLargeBranch(layout_branches, gap):
-            hasLargeB = True
-        else:
-            hasLargeB = False
+        hasLargeB =  self.hasLargeBranch(layout_branches, gap)
         for n in layout_branches:
             n.SetLayout(xStart, self.y)
             #xStart += gap

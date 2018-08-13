@@ -37,7 +37,6 @@ class Island:
         return rightedge+Offset
 
     def drawSingleBus(self, bus, x, y, dir, busLen, canv):
-
         b = Bus(x, y, busLen, bus, dir, canv)
         b.draw()
 
@@ -71,15 +70,16 @@ class Island:
         glob.VoltPosition[midlowVolt] = [self.x-630, self.y]
         glob.VoltPosition[lowVolt] = [self.x+600, self.y]
 
-        self.drawBuses(self.VoltBUSDict[highVolt], glob.VoltPosition[highVolt][0], glob.VoltPosition[highVolt][1], "up", canv)
-        self.drawBuses(self.VoltBUSDict[midhighVolt], glob.VoltPosition[midhighVolt][0], glob.VoltPosition[midhighVolt][1], "up", canv)
-        self.drawBuses(self.VoltBUSDict[midlowVolt], glob.VoltPosition[midlowVolt][0], glob.VoltPosition[midlowVolt][1], "down", canv)
-        self.drawBuses(self.VoltBUSDict[lowVolt], glob.VoltPosition[lowVolt][0], glob.VoltPosition[lowVolt][1], "down", canv)
+        re = self.drawBuses(self.VoltBUSDict[highVolt], glob.VoltPosition[highVolt][0], glob.VoltPosition[highVolt][1], "up", canv)
+        self.drawBuses(self.VoltBUSDict[midhighVolt], glob.VoltPosition[midhighVolt][0], glob.VoltPosition[midhighVolt][1], "up", canv, re)
+        re = self.drawBuses(self.VoltBUSDict[midlowVolt], glob.VoltPosition[midlowVolt][0], glob.VoltPosition[midlowVolt][1], "down", canv)
+        self.drawBuses(self.VoltBUSDict[lowVolt], glob.VoltPosition[lowVolt][0], glob.VoltPosition[lowVolt][1], "down", canv, re)
 
 
     def draw(self, x):
         if len (self.VoltBUSDict) == 1:
             vt = list(self.VoltBUSDict.keys())[0]
+            glob.VoltPosition[vt] = [self.x, self.y]
             self.drawBuses(self.VoltBUSDict[vt], self.x, self.y, "up", x)
         elif len(self.VoltBUSDict) == 2:
             self.draw2Section(x)
