@@ -93,4 +93,5 @@ class Island:
             raise ValueError("Unknown type")
         keys = glob.AllTrans.keys()[:]
         for k in keys:
-            glob.AllTrans[k].drawTails()
+            pass
+            #glob.AllTrans[k].drawTails()

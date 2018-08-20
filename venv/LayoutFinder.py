@@ -27,7 +27,7 @@ class LayoutFinder:
         res = 0
         for h in Hs:
             res += 120 + SizeEstimator.estimateWidth(h, [cnID])
-        return max(res, 400)
+        return max(res+100, 400)
 
 
 
@@ -53,6 +53,7 @@ class LayoutFinder:
                 glob.globOffset = t.y + 450
             self.y =  glob.globOffset
             self.x = t.x
+            print self.x, t.x
 
     def find2newX(self, buses):
         fixedT = self.FixedTransformer(buses)
@@ -192,10 +193,10 @@ class LayoutFinder:
         b3, b4 = glob.VerticalBusPair[b1],glob.VerticalBusPair[b2]
         w1,w2 = max(self.getEstimatedLength(b1),self.getEstimatedLength(b3)), max(self.getEstimatedLength(b2),self.getEstimatedLength(b4))
         if self.is32:
-            glob.placeBus(b1, self.x-w1/2-50, self.y + 250 + 100 * self.offset32, w1, self.dir)
-            glob.placeBus(b3, self.x-w1/2-50, self.y - 250 - 100 * self.offset32, w1, self.dir)
-            glob.placeBus(b2, self.x+w2/2+50, self.y + 250 + 100 * self.offset32, w2, self.dir)
-            glob.placeBus(b4, self.x+w2/2+50, self.y - 250 - 100 * self.offset32, w2, self.dir)
+            glob.placeBus(b1, self.x-w1/2-50, self.y + 20 + 110*self.offset32, w1, self.dir)
+            glob.placeBus(b3, self.x-w1/2-50, self.y - 20 - 110*self.offset32, w1, self.dir)
+            glob.placeBus(b2, self.x+w2/2+50, self.y + 20 + 110*self.offset32, w2, self.dir)
+            glob.placeBus(b4, self.x+w2/2+50, self.y - 20 - 110*self.offset32, w2, self.dir)
             glob.BusDict[b1].define32()
             glob.BusDict[b2].define32()
             glob.BusDict[b3].define32()
@@ -260,8 +261,10 @@ class LayoutFinder:
             if hasDirectionTransformer(b2):
                 b1, b2 = b2, b1
             glob.AddVerticalBusPair(b1, b2)
-            glob.placeBus(b1, self.x, self.y + 250 + 100*self.offset32, 1500, self.dir)
-            glob.placeBus(b2, self.x, self.y - 250 - 100*self.offset32, 1500, self.dir)
+            w1, w2 = self.getEstimatedLength(b1), self.getEstimatedLength(b2)
+            tmpL = max([w1, w2, 1000])
+            glob.placeBus(b1, self.x, self.y + 20 + 110*self.offset32, tmpL, self.dir)
+            glob.placeBus(b2, self.x, self.y - 20 - 110*self.offset32, tmpL, self.dir)
             glob.BusDict[b1].define32()
             glob.BusDict[b2].define32()
             return [b1,b2]
@@ -347,10 +350,16 @@ class LayoutFinder:
                         tmpLines.append(line)
                     else:
                         raise ValueError("SELF CONNECTED")
-            if len(tmpLines) == 1 and len(tmpLines[0]) >= 13 and (len(tmpLines[0]) - 13)%6==0: #500 volt station
-                self.offset32 = max(self.offset32, (len(tmpLines[0])-13)/6)
+            if len(tmpLines) == 1 and len(tmpLines[0]) >= 13 and Utility.match32Feature(tmpLines[0]): #500 volt station
+                self.offset32 = max(self.offset32, (len(tmpLines[0])/6)) #find the position of the upper bus
                 self.is32 = True
             busD[Otherbus] += 1
+        if self.is32:  # Sometimes a 32 pattern is not strict, add the leftover (update self.offset32)
+            for h in branchHeads:
+                lines = [[cn] + x for x in Utility.findTail(h, [cn])]
+                for line in lines:
+                    if line[-1] in self.busCN:
+                        self.offset32 = max(self.offset32, (len(line[:-1])/6.0))
         return busD
 
 

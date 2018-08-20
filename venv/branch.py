@@ -105,7 +105,7 @@ class Branch:
     def drawPair(self):
         tmp = findTail(self.node, self.fromNode)
         for i in tmp:
-            if i[-1] in glob.BusCNID and glob.isPairEnd(i[-1], self.parent.cnID): #draw the pair
+            if i[-1] in glob.BusCNID and glob.isPair(i[-1], self.parent.cnID): #draw the pair
                 if ((len(i) == 2 or len(i) == 4 or len(i) == 6) and not self.parent.is32) or not self.WithinLayout:#Have Assumed only one pair across 2 lines
                     bridge = i[:-1]
                     newX, newY = self.drawConnection(self.x, self.y, i, self.direction)
@@ -116,44 +116,61 @@ class Branch:
                             self.canvas.drawTail(2*newX - self.x, newY, bridge[len(bridge) / 2 + 1], bridge, self.direction)
                         else:
                             self.canvas.drawTail(newX, newY, bridge[len(bridge)/2], bridge, self.direction)
-
                     break
-                if (len(i) - 18)% 6==  0 :
-                    self.draw500Branch(self.x, self.y, i, "up")
+                if match32Feature(i):
+                    self.draw32Branch(self.x, self.y, i, "up")
                     break
         else:
-            warnings.warn("ILLEGAL PAIR:" + self.node, RuntimeWarning)
+            c = self.drawDistorted32(tmp)
+            if c:
+                warnings.warn("Identified a distorted 32 pattern, better inspect")
+            else:
+                raise ValueError("ILLEGAL PAIR!")
 
-    def find500BranchDirReversed(self, eles):
+    def drawDistorted32(self, lines):
+        for l in lines:
+            if match32Feature(l[2:]):
+                self.draw32Branch(self.x, self.y, l, "up", 2)
+                return True
+            if match32Feature(l[:-2]):
+                self.draw32Branch(self.x, self.y, l, "up", 0)
+                return True
+        return False
+
+    def find32BranchDirReversed(self, eles):
         for line in eles:
             for e in line:
                 if "transformer" in e:
                     return True
         return False
 
-    def draw500Branch(self, x, y, eles, dir):
+    def draw32Branch(self, x, y, eles, dir, start=0):
         color = glob.voltMap[eles[0]]
         newY = y
-        leftOffset = rightOffset = 50
+        leftOffset = 0
+        rightOffset = 40
         turn = True
         otherBusY = glob.BusDict[eles[-1]].y
-        for i in range(0, len(eles)+1-6, 6):
+        if start != 0:
+            tmp = eles[:start]
+            newY = self.canvas.drawBranch(x, newY, 40, tmp, dir)
+        for i in range(start, len(eles)+1-6, 6):
             seg = eles[i:i+6]
             newY = self.canvas.drawBranch(x, newY, 40, seg, dir)
-            if i+6 != len(eles):
+            if i+6 != len(eles): # Draw out-branches
                 seghead = seg[-1]
                 tails = findTail(seghead, eles)
                 if len(tails) > 0:
                     tailLength = SizeEstimator.estimateWidth(seghead, eles)
                     if turn:#branch to left
-                        if i != 0:  # first turn, no need to offset
-                            leftOffset += tailLength+40
+                        #if i != 0:  # first turn, no need to offset
+                        leftOffset += tailLength+40
                         tmpOffset = -leftOffset
                     else:
                         tmpOffset = rightOffset
                         rightOffset += tailLength+40
                     turn = not turn
-                    if self.find500BranchDirReversed(tails):
+                    if self.find32BranchDirReversed(tails):
                         tgtX, tgtY = self.x + tmpOffset, self.y+40
                         newDir = "down"
                     else:
@@ -162,10 +179,10 @@ class Branch:
                     self.canvas.drawLine(x, newY, tgtX, newY, color)
                     self.canvas.drawLine(tgtX, newY, tgtX, tgtY, color)
                     self.canvas.drawTail(tgtX, tgtY, seghead, eles, newDir)
-
-            else:
-                self.canvas.drawLine(x, newY, x, otherBusY, color)
-
+        if i + 6 == len(eles):
+            self.canvas.drawLine(x, newY, x, otherBusY, color)
+        else:
+            self.canvas.drawBranch(x, newY, 40, eles[i+6:], dir)
     def drawConnection(self, posX, posY, connector, direction):
         tgtBus = connector[-1]
         connector = connector[:-1]

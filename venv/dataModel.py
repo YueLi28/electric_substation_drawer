@@ -76,7 +76,6 @@ class Canvas:
     def printToFile(self, fname="/home/liyue/jichengnnegyuanhinhightopozhongruinew/demo/2deditor/Test_new.js"):
         if "Test_new" not in fname:
             toJson = True
-            fname = fname.replace(".js",".json")
         else:
             toJson = False
         with open(fname, "w") as f:
@@ -181,6 +180,11 @@ class Canvas:
         return False
 
 
+    def drawBusLine(self, startX, startY, endX, endY, color, cnID):
+        l = Line(startX, startY, endX, endY, color, 15)
+        l.addAttributeFromBus(cnID)
+        self.canvas["d"].append(l.getRepresentation())
+
     def drawLine(self, startX, startY, endX, endY, color, borderWidth=7):
         l = Line(startX, startY, endX, endY, color, borderWidth)
         self.canvas["d"].append(l.getRepresentation())
@@ -214,6 +218,14 @@ class Line:
 
     def __str__(self):
         return json.dumps(self.representation, indent=2)
+
+    def addAttributeFromBus(self, cnID):
+        attrs =  glob.infoMap[cnID]
+        self.representation["a"] = {}
+        self.representation["a"]["name"] = attrs['name']
+        self.representation["a"]["voltage"] = attrs["volt"]
+        self.representation["p"]["tag"] = cnID
+        self.representation["a"]["lineColor"] = glob.getVoltRGB(attrs["volt"])
 
     def __repr__(self):
         return json.dumps(self.representation, indent=2)

@@ -82,8 +82,14 @@ class Bus:
 
     def hasLargeBranch(self, branches, gap):
         tmpMAX = 0
-        for n in branches:
-            tmpMAX = max(n.estimatedSize+50, tmpMAX)
+        for i, n in enumerate(branches):
+            branchGap = 0
+            branchGap += SizeEstimator.estimateRightWidth(n.node, self.cnID)
+            if i + 1 < len(branches):
+                branchGap += SizeEstimator.estimateLeftWidth(branches[i+1].node, self.cnID)
+
+            #xStart += n.estimatedSize+100
+            tmpMAX = max(branchGap + 40, tmpMAX)
         if tmpMAX > gap:
             return True
         else:
@@ -104,11 +110,14 @@ class Bus:
         if self.cnID in glob.VerticalBusPair and self.cnID < glob.VerticalBusPair[self.cnID]:
             xStart -= 30
         hasLargeB =  self.hasLargeBranch(layout_branches, gap)
-        for n in layout_branches:
+        for i, n in enumerate(layout_branches):
             n.SetLayout(xStart, self.y)
-            #xStart += gap
             if hasLargeB:
-                xStart += n.estimatedSize+100
+                xStart += SizeEstimator.estimateRightWidth(n.node, self.cnID)
+                if i + 1 < len(layout_branches):
+                    xStart += SizeEstimator.estimateLeftWidth(layout_branches[i+1].node, self.cnID)
+                xStart += 120
+                #xStart += n.estimatedSize+100
             else:
                 xStart += gap
         if len(not_layout_branches) > 2:
@@ -129,10 +138,15 @@ class Bus:
     def getDimension(self):
         return [self.x, self.y, self.length]
 
+    def drawBusLine(self):
+        self.canvas.drawBusLine(self.x - self.length / 2, self.y, self.x + self.length / 2, self.y,
+                             glob.voltMap[self.cnID], self.cnID)
+
+
     def draw(self):
         self.InitializeBranches()
         self.generateLayouts()
-        self.canvas.drawLine(self.x - self.length / 2 , self.y, self.x + self.length / 2 , self.y, glob.voltMap[self.cnID], 15)
+        self.drawBusLine()
         for each in self.branches:
             each.draw()
         for each in self.reversedBranches:
