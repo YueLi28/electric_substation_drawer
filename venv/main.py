@@ -38,6 +38,7 @@ class drawer():
         self.name = name
         fname = workingdir + name
         try:
+            raise ValueError("asd")
             url = u"http://192.168.2.5:9000/query/TwoOptionsNAME?SubstationNAME="+name
             response = urllib.urlopen(iriToUri(url))
             data = json.loads(response.read())
@@ -134,7 +135,7 @@ class drawer():
         for i in islands:
             isl = Island.Island(i, islX, islY)
             isl.draw(x)
-            islX+=2000
+            islX+=2500
         if isTest:
             x.printToFile(u"/home/liyue/substation_Json/"+self.name+u".js")
         else:
@@ -171,7 +172,7 @@ import operator
 
 isTest = False
 
-inp = "四川.洗马姑厂"
+inp = "四川.下索子厂"
 inp = unicode(inp, "utf-8")
 #k = tester()
 #25745: Vertical bus pair
