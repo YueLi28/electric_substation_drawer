@@ -48,7 +48,7 @@ class drawer():
         else:
             print "Try to get offline data"
             try:
-                with open(fname,'rb') as f:
+                with open(fname,'rU') as f:
                     data = pickle.load(f)
             except:
                 print "No offline data is available"

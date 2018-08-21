@@ -34,7 +34,7 @@ def findTransformers(node, visitedNode):
 
 class Canvas:
     def __init__(self, stationName):
-        self.canvas = {"v": "6.2.2", "d":[],"p": {"background":"rgb(0,0,0)", "layers":["0",1], "autoAdjustIndex":True, "hierarchicalRendering":True}}
+        self.canvas = {"v": "6.2.2", "d":[],"p": {"background":"rgb(50,50,50)", "layers":["0",1], "autoAdjustIndex":True, "hierarchicalRendering":True}}
         self.allBus = {}
         self.name = stationName
         self.generateName()

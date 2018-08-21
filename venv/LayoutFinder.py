@@ -53,7 +53,7 @@ class LayoutFinder:
                 glob.globOffset = t.y + 450
             self.y =  glob.globOffset
             self.x = t.x
-            print self.x, t.x
+
 
     def find2newX(self, buses):
         fixedT = self.FixedTransformer(buses)
