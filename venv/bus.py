@@ -95,7 +95,6 @@ class Bus:
         else:
             return False
 
-
     def generateLayout(self, branches, direction, offset):
         layout_branches = [b for b in branches if b.WithinLayout]
         not_layout_branches = [b for b in branches if not b.WithinLayout]

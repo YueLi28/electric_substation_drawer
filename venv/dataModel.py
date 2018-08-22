@@ -37,7 +37,7 @@ class Canvas:
         self.canvas = {"v": "6.2.2", "d":[],"p": {"background":"rgb(50,50,50)", "layers":["0",1], "autoAdjustIndex":True, "hierarchicalRendering":True}}
         self.allBus = {}
         self.name = stationName
-        self.generateName()
+        # self.generateName()
 
     def drawFloat(self, x, y, eX, ele):
         color =glob.voltMap[ele]
@@ -48,8 +48,8 @@ class Canvas:
         self.drawLine(x, y, x + complement, y, color)
         self.drawLine(eX, y, eX - complement, y, color)
 
-    def generateName(self):
-        namej = {"c":"ht.Text", "i":1, "p": {"name":"文字", "layer":1, "position":{"x":0, "y":-1350}},
+    def generateName(self, x=0, y=-1350):
+        namej = {"c":"ht.Text", "i":1, "p": {"name":"文字", "layer":1, "position":{"x":x - 15 * len(self.name), "y":y - 300}},
                  "s":{"label":"", "text.color":"rgb(255,0,0)", "text.font": "80px arial, sans-serif"}}
         namej["s"]["text"] = self.name
 
@@ -63,6 +63,12 @@ class Canvas:
     def drawTail(self, x, y, node, fromNodes, direction, headLength=40):
 
         drawer = TailDrawer(x, y, node, fromNodes, direction, self, headLength)
+
+        if glob.stationY is None:
+            glob.stationY = y
+        elif glob.stationY > y:
+            glob.stationY = y
+
         drawer.draw()
 
             #raise ValueError("WRONG TAIL!", lines)

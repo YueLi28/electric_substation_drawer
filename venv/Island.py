@@ -24,6 +24,17 @@ class Island:
             bs = glob.BusDict[b]
             rightedge = max(bs.x + bs.w/2, rightedge)
             leftedge = min(bs.x - bs.w/2, leftedge)
+
+            if glob.stationX1 is None:
+                glob.stationX1 = leftedge
+            elif glob.stationX1 > leftedge:
+                glob.stationX1 = leftedge
+
+            if glob.stationX2 is None:
+                glob.stationX2 = rightedge
+            elif glob.stationX2 < rightedge:
+                glob.stationX2 = rightedge
+
         if startingP is None:
             Offset = 0
         else:

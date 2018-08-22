@@ -11,7 +11,7 @@ nodeSize = {"daozha": (48, 58), "daozhakai": (48, 58), "kaiguan": (24, 64), "sin
 daozhastat = {}
 kaiguanstat = {}
 sideBusFP = ['Disconnector', 'Disconnector', 'Breaker', 'Disconnector']
-busPairFP = ['Disconnector', 'Disconnector']
+busPairFP = ['Disconnecto   r', 'Disconnector']
 transBus = collections.defaultdict(list)
 globOffset = None
 voltMap = {}
@@ -24,6 +24,10 @@ drawnNode = {}
 infoMap = {}
 VoltPosition = {}
 TransformerLine = {}
+
+stationX1 = None
+stationX2 = None
+stationY = None
 
 def getVoltRGB(Volt):
     name = voltColor[Volt]
@@ -74,6 +78,9 @@ def reset():
     global drawnNode
     global VoltPosition
     global TransformerLine
+    global stationX1
+    global stationX2
+    global stationY
 
     TransformerLine = {}
     VoltPosition = {}
@@ -91,6 +98,9 @@ def reset():
     daozhastat = {}
     transBus = collections.defaultdict(list)
     infoMap = {}
+    stationX1 = None
+    stationX2 = None
+    stationY = None
 
 def placeBus(id, x, y, w, dir):
     BusDict[id] = BusSkeleton(id, x,y,w, dir)

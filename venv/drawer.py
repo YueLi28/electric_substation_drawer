@@ -41,6 +41,7 @@ class drawer():
             data = json.loads(response.read())
         except:
             data = {}
+        print(data)
         if "results" in data and data["results"][0]["@@setedge"]:#Try to use online data, if no Online data, use offline data
             print "Data received from remote host"
             with open(fname, 'wb') as f:
@@ -138,6 +139,7 @@ class drawer():
             isl = Island.Island(i, islX, islY)
             isl.draw(x)
             islX+=2500
+        x.generateName((glob.stationX1 + glob.stationX2) / 2, glob.stationY)
         if isProduction:
             x.printToFile(self.JsonDir+self.name+u".json")
         else:
