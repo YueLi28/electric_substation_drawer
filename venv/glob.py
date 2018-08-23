@@ -11,7 +11,7 @@ nodeSize = {"daozha": (48, 58), "daozhakai": (48, 58), "kaiguan": (24, 64), "sin
 daozhastat = {}
 kaiguanstat = {}
 sideBusFP = ['Disconnector', 'Disconnector', 'Breaker', 'Disconnector']
-busPairFP = ['Disconnecto   r', 'Disconnector']
+busPairFP = ['Disconnector', 'Disconnector']
 transBus = collections.defaultdict(list)
 globOffset = None
 voltMap = {}
@@ -55,9 +55,9 @@ class BusSkeleton:
         return BNumber * 120
 
 def isPair(n, ID):
-    if n in VerticalBusPair and n == VerticalBusPair[ID]:
+    if n in VerticalBusPair and ID in VerticalBusPair and n == VerticalBusPair[ID]:
         return True
-    if n in HorizontalBusPair and n == HorizontalBusPair[ID]:
+    if n in HorizontalBusPair and ID in HorizontalBusPair and n == HorizontalBusPair[ID]:
         return True
     return False
 
