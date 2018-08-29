@@ -34,7 +34,7 @@ def findTransformers(node, visitedNode):
 
 class Canvas:
     def __init__(self, stationName):
-        self.canvas = {"v": "6.2.2", "d":[],"p": {"background":"rgb(50,50,50)", "layers":["0",1], "autoAdjustIndex":True, "hierarchicalRendering":True}}
+        self.canvas = {"v": "6.2.2", "d":[],"p": {"background":"rgb(255, 255, 255)", "layers":["0",1], "autoAdjustIndex":True, "hierarchicalRendering":True}}
         self.allBus = {}
         self.name = stationName
         # self.generateName()
@@ -49,8 +49,8 @@ class Canvas:
         self.drawLine(eX, y, eX - complement, y, color)
 
     def generateName(self, x=0, y=-1350):
-        namej = {"c":"ht.Text", "i":1, "p": {"name":"文字", "layer":1, "position":{"x":x - 15 * len(self.name), "y":y - 300}},
-                 "s":{"label":"", "text.color":"rgb(255,0,0)", "text.font": "80px arial, sans-serif"}}
+        namej = {"c":"ht.Text", "i":1, "p": {"name":"文字", "layer":1, "position":{"x":x - 25 * len(self.name), "y":y - 300}},
+                 "s":{"label":"", "text.color":"rgb(0,0,255)", "text.font": "80px arial, sans-serif"}}
         namej["s"]["text"] = self.name
 
         self.canvas["d"].append(namej)
@@ -63,11 +63,6 @@ class Canvas:
     def drawTail(self, x, y, node, fromNodes, direction, headLength=40):
 
         drawer = TailDrawer(x, y, node, fromNodes, direction, self, headLength)
-
-        if glob.stationY is None:
-            glob.stationY = y
-        elif glob.stationY > y:
-            glob.stationY = y
 
         drawer.draw()
 
@@ -175,6 +170,12 @@ class Canvas:
                 y-=Offset
                 self.drawLine(x, y, portX, y, volt)
             self.drawLine(portX, y, portX, portY, volt)
+
+        if glob.stationY is None:
+            glob.stationY = y
+        elif glob.stationY > y:
+            glob.stationY = y
+
         return y
 
     def CollideTrans(self, y):

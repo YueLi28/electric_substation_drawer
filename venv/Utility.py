@@ -30,8 +30,10 @@ def cleanElement(element):
         elementName = "daozha"
     if elementName == "Breaker":
         elementName = "kaiguan"
-    if elementName == "l_oad" or elementName == "C_P":
+    if elementName == "l_oad":
         elementName = "singlearrow"
+    if elementName == "C_P":
+        elementName = "dianrong"
     if elementName == "ACline":
         elementName = "singlearrow"
     if elementName == "two_port_transformer":

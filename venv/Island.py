@@ -105,4 +105,4 @@ class Island:
         keys = glob.AllTrans.keys()[:]
         for k in keys:
             pass
-            #glob.AllTrans[k].drawTails()
+            glob.AllTrans[k].drawTails()

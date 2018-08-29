@@ -7,7 +7,7 @@ BusCNID = set()
 BusDict = {}
 nodeSize = {"daozha": (48, 58), "daozhakai": (48, 58), "kaiguan": (24, 64), "singlearrow": (24, 64),
             "kaiguankai": (24, 64), "CN": (0, 0), "transformer2": (72, 90), "transformer3": (127.5, 99),
-            "generator": (40, 40), "C_S":(40, 40)}
+            "generator": (40, 40), "C_S":(40, 40), "dianrong":(40, 60)}
 daozhastat = {}
 kaiguanstat = {}
 sideBusFP = ['Disconnector', 'Disconnector', 'Breaker', 'Disconnector']
@@ -17,9 +17,9 @@ globOffset = None
 voltMap = {}
 colorRGB = { "white":"rgb(255,255,255)", "cherry":"rgb(200,40,150)", "500Color":"rgb(255,0,0)", "220Color":"rgb(255,0,255)",
             "10Color":"rgb(170,170,0)", "35Color":"rgb(255,255,0)", "110Color":"rgb(240,65,85)","11Color":"rgb(0,89,127)",
-            "6Color":"rgb(0,0,0)", "13Color":"rgb(0,210,0)"}
+            "6Color":"rgb(0,0,0)", "13Color":"rgb(0,0,0)"}
 voltColor = {220: "220Color", 35: "35Color", 110: "110Color", 10: "10Color", 0:"cherry", 500:"500Color", 4:"white",
-             11:"11Color", 20: "white",22: "white",13:"13Color", 6: "6Color", 60:"white", 15:"white", 18:"white", 24:"white"}
+             11:"11Color", 20: "white",22: "13Color",13:"13Color", 6: "6Color", 60:"white", 15:"white", 18:"white", 24:"white"}
 drawnNode = {}
 infoMap = {}
 VoltPosition = {}
