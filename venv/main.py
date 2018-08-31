@@ -22,7 +22,7 @@ if __name__ == "__main__":
         else:
             inp = sys.argv[1]
     else:
-        inp = "四川.遂宁"
+        inp = "四川.德昌风电厂"
     inp = unicode(inp, "utf-8")
     k = drawer(inp, workingdir, queryURL, JsonDir)
     k.newdraw(isProductionEnvironment)
